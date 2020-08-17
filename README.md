@@ -145,7 +145,7 @@ This library will output either a truecolor ARGB or RGB file. Grayscale and inde
 Support for metadata is currently close to zero. If you need comments in your PNG file, or advanced support for color profiles this library currently does not support that. If you just are interested in a simple SRGB profile there is an experimental method for it.
 
 ## Looklet
-We develop and use this library at https://www.looklet.com/ to quickly compress photorealistic fake fashion images for e-commerce.
+We develop and use this library at https://www.looklet.com/ to quickly compress high quality fashion images for e-commerce.
 
 Are you a skilled Java or React developer? Feel free to join in: https://www.looklet.com/career/job-openings/
 
