@@ -1,0 +1,214 @@
+package com.pngencoder;
+
+import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.util.Collections;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterOutputStream;
+
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+
+public class PngEncoderDeflaterOutputStreamTest {
+    private static final BiConsumer<byte[], OutputStream> SINGLE_THREADED_DEFLATER = (bytes, outputStream) -> {
+        try (DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(outputStream)) {
+            deflaterOutputStream.write(bytes);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    };
+
+    private static final BiConsumer<byte[], OutputStream> MULTI_THREADED_DEFLATER = (bytes, outputStream) -> {
+        try (PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, -1)) {
+            deflaterOutputStream.write(bytes);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    };
+
+    @Test
+    public void deflateSingleThreadedJustFiveBytes() throws Exception {
+        byte[] expected = { 1, 2, 3, 4, 5 };
+        assertThatBytesIsSameAfterDeflateAndInflate(expected, SINGLE_THREADED_DEFLATER);
+    }
+
+    @Test
+    public void deflateMultiThreadedJustFiveBytes() throws Exception {
+        byte[] expected = { 1, 2, 3, 4, 5 };
+        assertThatBytesIsSameAfterDeflateAndInflate(expected, MULTI_THREADED_DEFLATER);
+    }
+
+    @Test
+    public void deflateSingleThreadedOneSegment() throws Exception {
+        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL / 2);
+        assertThatBytesIsSameAfterDeflateAndInflate(expected, SINGLE_THREADED_DEFLATER);
+    }
+
+    @Test
+    public void deflateMultiThreadedOneSegment() throws Exception {
+        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL / 2);
+        assertThatBytesIsSameAfterDeflateAndInflate(expected, MULTI_THREADED_DEFLATER);
+    }
+
+    @Test
+    public void deflateSingleThreadedTwoSegmentsToTestSegmentBoundary() throws Exception {
+        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 2);
+        assertThatBytesIsSameAfterDeflateAndInflate(expected, SINGLE_THREADED_DEFLATER);
+    }
+
+    @Test
+    public void deflateMultiThreadedTwoSegmentsToTestSegmentBoundary() throws Exception {
+        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 2);
+        assertThatBytesIsSameAfterDeflateAndInflate(expected, MULTI_THREADED_DEFLATER);
+    }
+
+    @Test
+    public void deflateMultiThreaded300SegmentsToTestThreadSafety() throws Exception {
+        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 300);
+        assertThatBytesIsSameAfterDeflateAndInflateFast(expected, MULTI_THREADED_DEFLATER);
+    }
+
+    @Test(expected = IOException.class)
+    public void constructorThrowsIOExceptionOnWritingDeflateHeaderWithRiggedOutputStream() throws IOException {
+        RiggedOutputStream riggedOutputStream = new RiggedOutputStream(1);
+        new PngEncoderDeflaterOutputStream(riggedOutputStream, -1);
+    }
+
+    @Test(expected = IOException.class)
+    public void finishThrowsIOExceptionOnJoiningWithRiggedOutputStream() throws IOException {
+        RiggedOutputStream riggedOutputStream = new RiggedOutputStream(3);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(riggedOutputStream, -1);
+        byte[] bytesToWrite = createRandomBytes(10);
+        deflaterOutputStream.write(bytesToWrite);
+        deflaterOutputStream.finish();
+    }
+
+    @Test(expected = IOException.class)
+    public void finishThrowsIOExceptionOnJoiningWithRiggedPngEncoderDeflaterSegmentTask() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(byteArrayOutputStream, -1);
+        deflaterOutputStream.submitTask(new RiggedPngEncoderDeflaterSegmentTask());
+        deflaterOutputStream.finish();
+    }
+
+    @Test
+    public void assertiveBufferPool10Bytes() throws IOException {
+        PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, -1, pool);
+        byte[] bytesToWrite = createRandomBytes(10);
+        deflaterOutputStream.write(bytesToWrite);
+        deflaterOutputStream.finish();
+        pool.assertThatGivenIsBorrowed();
+    }
+
+    @Test
+    public void assertiveBufferPoolManyBytes() throws IOException {
+        PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, -1, pool);
+        byte[] bytesToWrite = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 2);
+        deflaterOutputStream.write(bytesToWrite);
+        deflaterOutputStream.finish();
+        pool.assertThatGivenIsBorrowed();
+    }
+
+    private static byte[] createRandomBytes(int length) {
+        Random random = new Random(12345);
+        byte[] randomBytes = new byte[length];
+        random.nextBytes(randomBytes);
+        return randomBytes;
+    }
+
+    private static void assertThatBytesIsSameAfterDeflateAndInflate(byte[] expected, BiConsumer<byte[], OutputStream> deflater) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        deflater.accept(expected, outputStream);
+        byte[] deflated = outputStream.toByteArray();
+        byte[] actual = inflate(deflated);
+        assertThat(actual.length, is(expected.length));
+        assertThat(actual, is(expected));
+    }
+
+    private static void assertThatBytesIsSameAfterDeflateAndInflateFast(byte[] expected, BiConsumer<byte[], OutputStream> deflater) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        deflater.accept(expected, outputStream);
+        byte[] deflated = outputStream.toByteArray();
+        byte[] actual = inflate(deflated);
+        assertThat(actual.length, is(expected.length));
+        for (int i = 0; i < actual.length; i+=11) {
+            assertThat(actual[i], is(expected[i]));
+        }
+    }
+
+    private static byte[] inflate(byte[] deflated) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (InflaterOutputStream inflaterOutputStream = new InflaterOutputStream(byteArrayOutputStream)) {
+            inflaterOutputStream.write(deflated);
+        }
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private static class PngEncoderDeflaterBufferPoolAssertive extends PngEncoderDeflaterBufferPool {
+        private final Set<PngEncoderDeflaterBuffer> borrowed = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final Set<PngEncoderDeflaterBuffer> given = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+        @Override
+        PngEncoderDeflaterBuffer borrow() {
+            PngEncoderDeflaterBuffer buffer = super.borrow();
+            borrowed.add(buffer);
+            return buffer;
+        }
+
+        @Override
+        void giveBack(PngEncoderDeflaterBuffer buffer) {
+            if (buffers.contains(buffer)) {
+                throw new IllegalArgumentException("Adding an already present buffer to pool is not allowed.");
+            }
+            given.add(buffer);
+            super.giveBack(buffer);
+        }
+
+        void assertThatGivenIsBorrowed() {
+            assertThat(given, is(borrowed));
+        }
+    }
+
+    private static class RiggedOutputStream extends OutputStream {
+        private final int countBytesToThrowException;
+        private int count;
+
+        public RiggedOutputStream(int countBytesToThrowException) {
+            this.countBytesToThrowException = countBytesToThrowException;
+            this.count = 0;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            count++;
+            if (count >= countBytesToThrowException) {
+                throw new IOException("This exception was generated for the purpose of testing.");
+            }
+        }
+    }
+
+    private static class RiggedPngEncoderDeflaterSegmentTask extends PngEncoderDeflaterSegmentTask {
+        private static final PngEncoderDeflaterBufferPool pool = new PngEncoderDeflaterBufferPool();
+
+        public RiggedPngEncoderDeflaterSegmentTask() {
+            super(pool.borrow(), pool.borrow(), pool.borrow(), -1, false);
+        }
+
+        @Override
+        public PngEncoderDeflaterSegmentResult get() {
+            throw new RuntimeException("This exception was generated for the purpose of testing.");
+        }
+    }
+}
