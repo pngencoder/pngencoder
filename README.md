@@ -102,6 +102,7 @@ public class Examples {
 https://search.maven.org/artifact/com.pngencoder/pngencoder
 
 ## PngEncoder vs ImageIO
+The table below shows the number of images encoded per second, using PngEncoder vs ImageIO:
 Image | PngEncoder | ImageIO | Times Faster
 --- | --- | --- | ---
 random1024x1024 | 31.450 | 5.204 | 6.0
