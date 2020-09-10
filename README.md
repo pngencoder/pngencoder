@@ -89,7 +89,7 @@ public class Examples {
 }
 ```
 
-## Maven
+## Maven Central
 
 ```xml
 <dependency>
@@ -99,13 +99,7 @@ public class Examples {
 </dependency>
 ```
 
-We are not yet on Maven Central. In the meantime:
-
-```shell script
-git clone git@github.com:pngencoder/pngencoder.git
-cd pngencoder
-mvn clean install
-```
+https://search.maven.org/artifact/com.pngencoder/pngencoder
 
 ## PngEncoder vs ImageIO
 Image | PngEncoder | ImageIO | Times Faster
