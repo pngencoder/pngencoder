@@ -135,12 +135,12 @@ Compression Level | Speed | Size | Speed / Size
 
 Run yourself using [PngEncoderBenchmarkCompressionSpeedVsSize.java](src/test/java/com/pngencoder/PngEncoderBenchmarkCompressionSpeedVsSize.java)
 
-In the table above we see that the "Speed / Size" column is close to 1 for all compression levels but 0. You likely want to avoid compression level 0 (no compression) if the file size matters at all. In comparison to using compression level 1 it's 60% faster but the file size is a whopping 827%. That is likely not worth it.
+In the table above we see that the "Speed / Size" column is close to 1 for all compression levels but 0. You likely want to avoid compression level 0 (no compression) if the file size matters at all. In comparison to using compression level 1 it's 60% faster, but the file size is a whopping 827%. That is likely not worth it.
 
 ## Noteworthy Caveats
 This library achieves the speedup mainly using multithreading. The performance tests above were run on a computer with 8 logical cores. So if you for example use a single core computer (perhaps in the cloud) the speedup will not be significant.
 
-This library will output either a truecolor ARGB or RGB file. Grayscale and indexed PNG file output is not supported.
+This library will output either a truecolor ARGB or RGB file. It does not support grayscale and indexed PNG file output.
 
 Support for metadata is currently close to zero. If you need comments in your PNG file, or advanced support for color profiles this library currently does not support that. If you just are interested in a simple SRGB profile there is an experimental method for it.
 
@@ -149,4 +149,4 @@ We develop and use this library at https://www.looklet.com/ to quickly compress 
 
 Are you a skilled Java or React developer? Feel free to join in: https://www.looklet.com/career/job-openings/
 
-<img src="https://user-images.githubusercontent.com/421009/90376713-2e418f80-e077-11ea-8018-9c79ecf9d519.jpg" width="200" />
+<img src="https://user-images.githubusercontent.com/421009/90376713-2e418f80-e077-11ea-8018-9c79ecf9d519.jpg" width="200" alt="Looklet Fashion Image"/>

@@ -128,11 +128,11 @@ public class PngEncoderTest {
         assertThat(root.getElementsByTagName("gAMA").getLength(), is(1));
     }
 
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height) throws IOException {
+    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height) {
         return encodeToBytesIntArgb(image, width, height, false);
     }
 
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height, boolean addSrgbChunk) throws IOException {
+    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height, boolean addSrgbChunk) {
         BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(image, width, height);
         PngEncoder pngEncoder = new PngEncoder()
                 .withBufferedImage(bufferedImage)
