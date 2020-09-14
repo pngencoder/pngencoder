@@ -1,0 +1,11 @@
+sudo: false
+language: java
+script: mvn clean verify -P coverage
+jdk:
+  - openjdk8
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+cache:
+  timeout: 1000
+  directories:
+    - $HOME/.m2
