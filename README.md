@@ -1,7 +1,7 @@
 ![PngEncoder Logo](https://user-images.githubusercontent.com/421009/85217670-be26ce00-b393-11ea-8741-4da520fc2dd2.png)
 
 
-<img src="https://img.shields.io/maven-central/v/com.pngencoder/pngencoder"> <img src="https://img.shields.io/travis/pngencoder/pngencoder/develop">
+<img src="https://img.shields.io/maven-central/v/com.pngencoder/pngencoder"> <img src="https://img.shields.io/travis/pngencoder/pngencoder/develop"> <img src="https://img.shields.io/codecov/c/github/pngencoder/pngencoder/develop?token=305f39ec177948b3bde322c021debcdf">
 
 - About 5 times faster than ImageIO (on a computer with 8 logical cores)
 - Easy to use interface
