@@ -4,7 +4,7 @@
 
     <groupId>com.pngencoder</groupId>
     <artifactId>pngencoder</artifactId>
-    <version>0.9.0</version>
+    <version>0.10.0</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -29,6 +29,12 @@
         <developer>
             <name>Johan Tidén</name>
             <email>johan.tiden@looklet.com</email>
+            <organization>Looklet</organization>
+            <organizationUrl>https://looklet.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Johan Kaving</name>
+            <email>johan.kaving@looklet.com</email>
             <organization>Looklet</organization>
             <organizationUrl>https://looklet.com</organizationUrl>
         </developer>
@@ -121,6 +127,34 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.8.5</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
     <dependencies>
