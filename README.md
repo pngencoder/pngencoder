@@ -138,7 +138,7 @@ In the table above we see that the "Speed / Size" column is close to 1 for all c
 ## Noteworthy Caveats
 This library achieves the speedup mainly using multithreading. The performance tests above were run on a computer with 8 logical cores. So if you for example use a single core computer (perhaps in the cloud) the speedup will not be significant.
 
-The file size is about 2% larger than images encoded by ImageIO. This small overhead is due to the multi threaded compression.
+The file size is about 2% larger than images encoded by ImageIO. This small overhead is due to the multi-threaded compression.
 
 This library will output either a truecolor ARGB or RGB file. It does not support grayscale and indexed PNG file output.
 
