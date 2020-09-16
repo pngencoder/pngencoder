@@ -32,6 +32,12 @@
             <organization>Looklet</organization>
             <organizationUrl>https://looklet.com</organizationUrl>
         </developer>
+        <developer>
+            <name>Johan Kaving</name>
+            <email>johan.kaving@looklet.com</email>
+            <organization>Looklet</organization>
+            <organizationUrl>https://looklet.com</organizationUrl>
+        </developer>
     </developers>
 
     <scm>
