@@ -12,7 +12,6 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 class PngEncoderLogic {
-    static final int SEGMENT_MAX_LENGTH_DICTIONARY = 32 * 1024;
     static final int SEGMENT_MAX_LENGTH_ORIGINAL = 64 * 1024;
     static final int SEGMENT_MAX_LENGTH_DEFLATED = SEGMENT_MAX_LENGTH_ORIGINAL + (SEGMENT_MAX_LENGTH_ORIGINAL >> 3);
 
