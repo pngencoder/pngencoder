@@ -18,7 +18,6 @@ class PngEncoderDeflaterOutputStream extends FilterOutputStream {
     private final int compressionLevel;
     private final ConcurrentLinkedQueue<CompletableFuture<PngEncoderDeflaterSegmentResult>> resultQueue;
     private final int maximumResultQueueSize;
-    private PngEncoderDeflaterBuffer previousOriginalSegment;
     private PngEncoderDeflaterBuffer originalSegment;
     private long adler32;
     private boolean finished;
@@ -31,7 +30,6 @@ class PngEncoderDeflaterOutputStream extends FilterOutputStream {
         this.compressionLevel = compressionLevel;
         this.resultQueue = new ConcurrentLinkedQueue<>();
         this.maximumResultQueueSize = Runtime.getRuntime().availableProcessors() * 3;
-        this.previousOriginalSegment = pool.borrow();
         this.originalSegment = pool.borrow();
         this.adler32 = 1;
         this.finished = false;
@@ -92,7 +90,6 @@ class PngEncoderDeflaterOutputStream extends FilterOutputStream {
             out.write(ByteBuffer.allocate(4).putInt((int) adler32).array());
             out.flush();
         } finally {
-            previousOriginalSegment.giveBack();
             originalSegment.giveBack();
         }
     }
@@ -109,9 +106,8 @@ class PngEncoderDeflaterOutputStream extends FilterOutputStream {
 
     void submitTask(boolean lastSegment) {
         final PngEncoderDeflaterBuffer deflatedSegment = pool.borrow();
-        final PngEncoderDeflaterSegmentTask task = new PngEncoderDeflaterSegmentTask(previousOriginalSegment, originalSegment, deflatedSegment, compressionLevel, lastSegment);
+        final PngEncoderDeflaterSegmentTask task = new PngEncoderDeflaterSegmentTask(originalSegment, deflatedSegment, compressionLevel, lastSegment);
         submitTask(task);
-        previousOriginalSegment = originalSegment;
         originalSegment = pool.borrow();
     }
 
@@ -133,7 +129,7 @@ class PngEncoderDeflaterOutputStream extends FilterOutputStream {
                 adler32 = result.getUpdatedAdler32(adler32);
                 result.getDeflatedSegment().write(out);
             } finally {
-                result.getPreviousOriginalSegment().giveBack();
+                result.getOriginalSegment().giveBack();
                 result.getDeflatedSegment().giveBack();
             }
         }
@@ -160,7 +156,6 @@ class PngEncoderDeflaterOutputStream extends FilterOutputStream {
             return (byte) 0x9C;
         }
 
-        // TODO: Is this really right?
         if (compressionLevel >= 0 && compressionLevel <= 1) {
             return (byte) 0x01;
         }

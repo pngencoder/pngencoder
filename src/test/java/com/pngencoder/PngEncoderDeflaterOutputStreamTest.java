@@ -27,7 +27,7 @@ public class PngEncoderDeflaterOutputStreamTest {
     };
 
     private static final BiConsumer<byte[], OutputStream> MULTI_THREADED_DEFLATER = (bytes, outputStream) -> {
-        try (PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, -1)) {
+        try (PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL)) {
             deflaterOutputStream.write(bytes);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -79,13 +79,13 @@ public class PngEncoderDeflaterOutputStreamTest {
     @Test(expected = IOException.class)
     public void constructorThrowsIOExceptionOnWritingDeflateHeaderWithRiggedOutputStream() throws IOException {
         RiggedOutputStream riggedOutputStream = new RiggedOutputStream(1);
-        new PngEncoderDeflaterOutputStream(riggedOutputStream, -1);
+        new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL);
     }
 
     @Test(expected = IOException.class)
     public void finishThrowsIOExceptionOnJoiningWithRiggedOutputStream() throws IOException {
         RiggedOutputStream riggedOutputStream = new RiggedOutputStream(3);
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(riggedOutputStream, -1);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL);
         byte[] bytesToWrite = createRandomBytes(10);
         deflaterOutputStream.write(bytesToWrite);
         deflaterOutputStream.finish();
@@ -94,7 +94,7 @@ public class PngEncoderDeflaterOutputStreamTest {
     @Test(expected = IOException.class)
     public void finishThrowsIOExceptionOnJoiningWithRiggedPngEncoderDeflaterSegmentTask() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(byteArrayOutputStream, -1);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(byteArrayOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL);
         deflaterOutputStream.submitTask(new RiggedPngEncoderDeflaterSegmentTask());
         deflaterOutputStream.finish();
     }
@@ -103,7 +103,7 @@ public class PngEncoderDeflaterOutputStreamTest {
     public void assertiveBufferPool10Bytes() throws IOException {
         PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, -1, pool);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, pool);
         byte[] bytesToWrite = createRandomBytes(10);
         deflaterOutputStream.write(bytesToWrite);
         deflaterOutputStream.finish();
@@ -114,7 +114,7 @@ public class PngEncoderDeflaterOutputStreamTest {
     public void assertiveBufferPoolManyBytes() throws IOException {
         PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, -1, pool);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, pool);
         byte[] bytesToWrite = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 2);
         deflaterOutputStream.write(bytesToWrite);
         deflaterOutputStream.finish();
@@ -203,7 +203,7 @@ public class PngEncoderDeflaterOutputStreamTest {
         private static final PngEncoderDeflaterBufferPool pool = new PngEncoderDeflaterBufferPool();
 
         public RiggedPngEncoderDeflaterSegmentTask() {
-            super(pool.borrow(), pool.borrow(), pool.borrow(), -1, false);
+            super(pool.borrow(), pool.borrow(), PngEncoder.DEFAULT_COMPRESSION_LEVEL, false);
         }
 
         @Override

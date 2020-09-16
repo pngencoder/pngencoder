@@ -108,9 +108,9 @@ https://search.maven.org/artifact/com.pngencoder/pngencoder
 The table below shows the number of images encoded per second, using PngEncoder vs ImageIO:
 Image | PngEncoder | ImageIO | Times Faster
 --- | --- | --- | ---
-random1024x1024 | 31.450 | 5.204 | 6.0
-logo2121x350 | 135.373 | 25.937 | 5.2
-looklet4900x6000 | 0.161 | 0.029 | 5.6
+random1024x1024 | 40.425 | 5.176 | 7.8
+logo2121x350 | 134.061 | 25.561 | 5.2
+looklet4900x6000 | 0.201 | 0.029 | 6.9
 
 Run yourself using [PngEncoderBenchmarkPngEncoderVsImageIO.java](src/test/java/com/pngencoder/PngEncoderBenchmarkPngEncoderVsImageIO.java)
 
@@ -121,22 +121,24 @@ Note that these numbers are for the default compression level 9 which produces i
 Compression Level | Speed | Size | Speed / Size
 --- | --- | --- | ---
 9 (default) | 1.00 | 1.00 | 1.00
-8 | 1.25 | 1.40 | 0.89
-7 | 1.56 | 1.53 | 1.02
-6 | 1.59 | 1.52 | 1.05
-5 | 1.67 | 1.60 | 1.05
-4 | 1.71 | 1.60 | 1.06
-3 | 2.80 | 2.84 | 0.99
-2 | 2.73 | 2.99 | 0.91
-1 | 2.72 | 3.09 | 0.88
-0 | 3.53 | 255.44 | 0.01
+8 | 1.10 | 1.14 | 0.97
+7 | 1.36 | 1.24 | 1.10
+6 | 1.40 | 1.23 | 1.14
+5 | 1.46 | 1.29 | 1.13
+4 | 1.49 | 1.30 | 1.15
+3 | 2.33 | 2.30 | 1.02
+2 | 2.31 | 2.42 | 0.96
+1 | 2.31 | 2.50 | 0.92
+0 | 3.11 | 206.80 | 0.02
 
 Run yourself using [PngEncoderBenchmarkCompressionSpeedVsSize.java](src/test/java/com/pngencoder/PngEncoderBenchmarkCompressionSpeedVsSize.java)
 
-In the table above we see that the "Speed / Size" column is close to 1 for all compression levels but 0. You likely want to avoid compression level 0 (no compression) if the file size matters at all. In comparison to using compression level 1 it's 60% faster, but the file size is a whopping 827%. That is likely not worth it.
+In the table above we see that the "Speed / Size" column is close to 1 for all compression levels but 0. You likely want to avoid compression level 0 (no compression) if the file size matters at all. In comparison to using compression level 1 it's 35% faster, but the file size is a whopping 827%. That is likely not worth it.
 
 ## Noteworthy Caveats
 This library achieves the speedup mainly using multithreading. The performance tests above were run on a computer with 8 logical cores. So if you for example use a single core computer (perhaps in the cloud) the speedup will not be significant.
+
+The file size is about 2% larger than images encoded by ImageIO. This small overhead is due to the multi threaded compression.
 
 This library will output either a truecolor ARGB or RGB file. It does not support grayscale and indexed PNG file output.
 

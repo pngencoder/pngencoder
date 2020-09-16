@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.util.zip.Deflater;
 
 public class PngEncoder {
+    public static int DEFAULT_COMPRESSION_LEVEL = Deflater.BEST_COMPRESSION;
+
     private final BufferedImage bufferedImage;
     private final int compressionLevel;
     private final boolean multiThreadedCompressionEnabled;
@@ -31,7 +33,7 @@ public class PngEncoder {
     public PngEncoder() {
         this(
                 null,
-                Deflater.BEST_COMPRESSION,
+                DEFAULT_COMPRESSION_LEVEL,
                 true,
                 null);
     }

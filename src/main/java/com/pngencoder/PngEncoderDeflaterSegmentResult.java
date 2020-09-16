@@ -3,24 +3,24 @@ package com.pngencoder;
 import java.util.Objects;
 
 class PngEncoderDeflaterSegmentResult {
-    private final PngEncoderDeflaterBuffer previousOriginalSegment;
+    private final PngEncoderDeflaterBuffer originalSegment;
     private final PngEncoderDeflaterBuffer deflatedSegment;
     private final long originalSegmentAdler32;
     private final int originalSegmentLength;
 
     PngEncoderDeflaterSegmentResult(
-            PngEncoderDeflaterBuffer previousOriginalSegment,
+            PngEncoderDeflaterBuffer originalSegment,
             PngEncoderDeflaterBuffer deflatedSegment,
             long originalSegmentAdler32,
             int originalSegmentLength) {
-        this.previousOriginalSegment = Objects.requireNonNull(previousOriginalSegment, "previousOriginalSegment");
+        this.originalSegment = Objects.requireNonNull(originalSegment, "originalSegment");
         this.deflatedSegment = Objects.requireNonNull(deflatedSegment, "deflatedSegment");
         this.originalSegmentAdler32 = originalSegmentAdler32;
         this.originalSegmentLength = originalSegmentLength;
     }
 
-    public PngEncoderDeflaterBuffer getPreviousOriginalSegment() {
-        return previousOriginalSegment;
+    public PngEncoderDeflaterBuffer getOriginalSegment() {
+        return originalSegment;
     }
 
     public PngEncoderDeflaterBuffer getDeflatedSegment() {
