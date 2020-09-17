@@ -108,9 +108,9 @@ https://search.maven.org/artifact/com.pngencoder/pngencoder
 The table below shows the number of images encoded per second, using PngEncoder vs ImageIO:
 Image | PngEncoder | ImageIO | Times Faster
 --- | --- | --- | ---
-random1024x1024 | 40.425 | 5.176 | 7.8
-logo2121x350 | 134.061 | 25.561 | 5.2
-looklet4900x6000 | 0.201 | 0.029 | 6.9
+random1024x1024 | 36.324 | 5.150 | 7.1
+logo2121x350 | 127.034 | 24.857 | 5.1
+looklet4900x6000 | 0.159 | 0.029 | 5.5
 
 Run yourself using [PngEncoderBenchmarkPngEncoderVsImageIO.java](src/test/java/com/pngencoder/PngEncoderBenchmarkPngEncoderVsImageIO.java)
 

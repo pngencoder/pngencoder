@@ -14,10 +14,13 @@ import java.util.function.BiConsumer;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class PngEncoderDeflaterOutputStreamTest {
+    private static final int SEGMENT_MAX_LENGTH_ORIGINAL = 64 * 1024;
+
     private static final BiConsumer<byte[], OutputStream> SINGLE_THREADED_DEFLATER = (bytes, outputStream) -> {
         try (DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(outputStream)) {
             deflaterOutputStream.write(bytes);
@@ -27,7 +30,7 @@ public class PngEncoderDeflaterOutputStreamTest {
     };
 
     private static final BiConsumer<byte[], OutputStream> MULTI_THREADED_DEFLATER = (bytes, outputStream) -> {
-        try (PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL)) {
+        try (PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL)) {
             deflaterOutputStream.write(bytes);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -48,44 +51,44 @@ public class PngEncoderDeflaterOutputStreamTest {
 
     @Test
     public void deflateSingleThreadedOneSegment() throws Exception {
-        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL / 2);
+        byte[] expected = createRandomBytes(SEGMENT_MAX_LENGTH_ORIGINAL / 2);
         assertThatBytesIsSameAfterDeflateAndInflate(expected, SINGLE_THREADED_DEFLATER);
     }
 
     @Test
     public void deflateMultiThreadedOneSegment() throws Exception {
-        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL / 2);
+        byte[] expected = createRandomBytes(SEGMENT_MAX_LENGTH_ORIGINAL / 2);
         assertThatBytesIsSameAfterDeflateAndInflate(expected, MULTI_THREADED_DEFLATER);
     }
 
     @Test
     public void deflateSingleThreadedTwoSegmentsToTestSegmentBoundary() throws Exception {
-        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 2);
+        byte[] expected = createRandomBytes(SEGMENT_MAX_LENGTH_ORIGINAL * 2);
         assertThatBytesIsSameAfterDeflateAndInflate(expected, SINGLE_THREADED_DEFLATER);
     }
 
     @Test
     public void deflateMultiThreadedTwoSegmentsToTestSegmentBoundary() throws Exception {
-        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 2);
+        byte[] expected = createRandomBytes(SEGMENT_MAX_LENGTH_ORIGINAL * 2);
         assertThatBytesIsSameAfterDeflateAndInflate(expected, MULTI_THREADED_DEFLATER);
     }
 
     @Test
     public void deflateMultiThreaded300SegmentsToTestThreadSafety() throws Exception {
-        byte[] expected = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 300);
+        byte[] expected = createRandomBytes(SEGMENT_MAX_LENGTH_ORIGINAL * 300);
         assertThatBytesIsSameAfterDeflateAndInflateFast(expected, MULTI_THREADED_DEFLATER);
     }
 
     @Test(expected = IOException.class)
     public void constructorThrowsIOExceptionOnWritingDeflateHeaderWithRiggedOutputStream() throws IOException {
         RiggedOutputStream riggedOutputStream = new RiggedOutputStream(1);
-        new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL);
+        new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL);
     }
 
     @Test(expected = IOException.class)
     public void finishThrowsIOExceptionOnJoiningWithRiggedOutputStream() throws IOException {
         RiggedOutputStream riggedOutputStream = new RiggedOutputStream(3);
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL);
         byte[] bytesToWrite = createRandomBytes(10);
         deflaterOutputStream.write(bytesToWrite);
         deflaterOutputStream.finish();
@@ -94,16 +97,16 @@ public class PngEncoderDeflaterOutputStreamTest {
     @Test(expected = IOException.class)
     public void finishThrowsIOExceptionOnJoiningWithRiggedPngEncoderDeflaterSegmentTask() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(byteArrayOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(byteArrayOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL);
         deflaterOutputStream.submitTask(new RiggedPngEncoderDeflaterSegmentTask());
         deflaterOutputStream.finish();
     }
 
     @Test
     public void assertiveBufferPool10Bytes() throws IOException {
-        PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive();
+        PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive(PngEncoderDeflaterOutputStream.getSegmentMaxLengthDeflated(SEGMENT_MAX_LENGTH_ORIGINAL));
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, pool);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL, pool);
         byte[] bytesToWrite = createRandomBytes(10);
         deflaterOutputStream.write(bytesToWrite);
         deflaterOutputStream.finish();
@@ -112,13 +115,47 @@ public class PngEncoderDeflaterOutputStreamTest {
 
     @Test
     public void assertiveBufferPoolManyBytes() throws IOException {
-        PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive();
+        PngEncoderDeflaterBufferPoolAssertive pool = new PngEncoderDeflaterBufferPoolAssertive(PngEncoderDeflaterOutputStream.getSegmentMaxLengthDeflated(SEGMENT_MAX_LENGTH_ORIGINAL));
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, pool);
-        byte[] bytesToWrite = createRandomBytes(PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL * 2);
+        PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(outputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL, pool);
+        byte[] bytesToWrite = createRandomBytes(SEGMENT_MAX_LENGTH_ORIGINAL * 2);
         deflaterOutputStream.write(bytesToWrite);
         deflaterOutputStream.finish();
         pool.assertThatGivenIsBorrowed();
+    }
+
+    @Test
+    public void segmentMaxLengthDictionaryIsExactly32k() {
+        assertThat(PngEncoderDeflaterOutputStream.SEGMENT_MAX_LENGTH_DICTIONARY, is(32 * 1024));
+    }
+
+    @Test
+    public void segmentMaxLengthOriginalMinGreaterThanSegmentMaxLengthDictionary() {
+        assertThat(PngEncoderDeflaterOutputStream.SEGMENT_MAX_LENGTH_ORIGINAL_MIN, is(greaterThan(PngEncoderDeflaterOutputStream.SEGMENT_MAX_LENGTH_DICTIONARY)));
+    }
+
+    @Test
+    public void segmentMaxLengthDeflatedGreaterThanSegmentMaxLengthOriginal() {
+        final int segmentMaxLengthOriginal = 64 * 1024;
+        final int segmentMaxLengthDeflated = PngEncoderDeflaterOutputStream.getSegmentMaxLengthDeflated(segmentMaxLengthOriginal);
+
+        assertThat(segmentMaxLengthDeflated, is(greaterThan(segmentMaxLengthOriginal)));
+    }
+
+    @Test
+    public void getSegmentMaxLengthOriginalRespectsMin() {
+        final int actual = PngEncoderDeflaterOutputStream.getSegmentMaxLengthOriginal(1);
+        final int expected = PngEncoderDeflaterOutputStream.SEGMENT_MAX_LENGTH_ORIGINAL_MIN;
+
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void getSegmentMaxLengthOriginalDoesNotIncreaseImmediatelyOverMin() {
+        final int actual = PngEncoderDeflaterOutputStream.getSegmentMaxLengthOriginal(PngEncoderDeflaterOutputStream.SEGMENT_MAX_LENGTH_ORIGINAL_MIN + 1);
+        final int expected = PngEncoderDeflaterOutputStream.SEGMENT_MAX_LENGTH_ORIGINAL_MIN;
+
+        assertThat(actual, is(expected));
     }
 
     private static byte[] createRandomBytes(int length) {
@@ -160,6 +197,10 @@ public class PngEncoderDeflaterOutputStreamTest {
         private final Set<PngEncoderDeflaterBuffer> borrowed = Collections.newSetFromMap(new ConcurrentHashMap<>());
         private final Set<PngEncoderDeflaterBuffer> given = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+        public PngEncoderDeflaterBufferPoolAssertive(int bufferMaxLength) {
+            super(bufferMaxLength);
+        }
+
         @Override
         PngEncoderDeflaterBuffer borrow() {
             PngEncoderDeflaterBuffer buffer = super.borrow();
@@ -200,7 +241,7 @@ public class PngEncoderDeflaterOutputStreamTest {
     }
 
     private static class RiggedPngEncoderDeflaterSegmentTask extends PngEncoderDeflaterSegmentTask {
-        private static final PngEncoderDeflaterBufferPool pool = new PngEncoderDeflaterBufferPool();
+        private static final PngEncoderDeflaterBufferPool pool = new PngEncoderDeflaterBufferPool(1337);
 
         public RiggedPngEncoderDeflaterSegmentTask() {
             super(pool.borrow(), pool.borrow(), PngEncoder.DEFAULT_COMPRESSION_LEVEL, false);
