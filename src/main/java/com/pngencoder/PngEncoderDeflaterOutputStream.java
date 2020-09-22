@@ -13,32 +13,62 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 // https://www.euccas.me/zlib/
 // https://stackoverflow.com/questions/13132136/java-multithreaded-compression-with-deflater
 class PngEncoderDeflaterOutputStream extends FilterOutputStream {
+    // The maximum amount of queued tasks.
+    // Multiplied because some segments compress faster than others.
+    // A value of 3 seems to keep all threads busy.
+    static final int COUNT_MAX_QUEUED_TASKS = PngEncoderDeflaterExecutorService.NUM_THREADS_IS_AVAILABLE_PROCESSORS * 3;
+
+    // Enforces writing to underlying stream in main thread.
+    // Multiplied so that not all work is finished before flush to underlying stream.
+    static final int COUNT_MAX_TOTAL_SEGMENTS = COUNT_MAX_QUEUED_TASKS * 3;
+
+    // The maximum dictionary size according to the deflate specification.
+    // A segment max length lower than this would not allow for future use of dictionary.
+    // Used for unit test sanity checking.
+    static final int SEGMENT_MAX_LENGTH_DICTIONARY = 32 * 1024;
+
+    // Our minimum segment length.
+    // Corresponds to about 2% size overhead.
+    // A lower value would better parallelize images but increase the size overhead.
+    static final int SEGMENT_MAX_LENGTH_ORIGINAL_MIN = 128 * 1024;
+
+    public static int getSegmentMaxLengthOriginal(int totalOriginalBytesLength) {
+        return Math.max(totalOriginalBytesLength / COUNT_MAX_TOTAL_SEGMENTS, SEGMENT_MAX_LENGTH_ORIGINAL_MIN);
+    }
+
+    public static int getSegmentMaxLengthDeflated(int segmentMaxLengthOriginal) {
+        return segmentMaxLengthOriginal + (segmentMaxLengthOriginal >> 3);
+    }
+
     private final PngEncoderDeflaterBufferPool pool;
     private final byte[] singleByte;
     private final int compressionLevel;
+    private final int segmentMaxLengthOriginal;
     private final ConcurrentLinkedQueue<CompletableFuture<PngEncoderDeflaterSegmentResult>> resultQueue;
-    private final int maximumResultQueueSize;
     private PngEncoderDeflaterBuffer originalSegment;
     private long adler32;
     private boolean finished;
     private boolean closed;
 
-    PngEncoderDeflaterOutputStream(OutputStream out, int compressionLevel, PngEncoderDeflaterBufferPool pool) throws IOException {
+    PngEncoderDeflaterOutputStream(OutputStream out, int compressionLevel, int segmentMaxLengthOriginal, PngEncoderDeflaterBufferPool pool) throws IOException {
         super(Objects.requireNonNull(out, "out"));
         this.pool = Objects.requireNonNull(pool, "pool");
         this.singleByte = new byte[1];
         this.compressionLevel = compressionLevel;
+        this.segmentMaxLengthOriginal = segmentMaxLengthOriginal;
         this.resultQueue = new ConcurrentLinkedQueue<>();
-        this.maximumResultQueueSize = Runtime.getRuntime().availableProcessors() * 3;
         this.originalSegment = pool.borrow();
         this.adler32 = 1;
         this.finished = false;
         this.closed = false;
+        if (pool.getBufferMaxLength() != getSegmentMaxLengthDeflated(segmentMaxLengthOriginal)) {
+            throw new IllegalArgumentException("Mismatch between segmentMaxLengthOriginal and pool.");
+        }
         writeDeflateHeader(out, compressionLevel);
     }
 
-    PngEncoderDeflaterOutputStream(OutputStream out, int compressionLevel) throws IOException {
-        this(out, compressionLevel, new PngEncoderDeflaterBufferPool());
+    PngEncoderDeflaterOutputStream(OutputStream out, int compressionLevel, int segmentMaxLengthOriginal) throws IOException {
+        this(out, compressionLevel, segmentMaxLengthOriginal, new PngEncoderDeflaterBufferPool(getSegmentMaxLengthDeflated(segmentMaxLengthOriginal)));
     }
 
     @Override
@@ -64,10 +94,10 @@ class PngEncoderDeflaterOutputStream extends FilterOutputStream {
         }
 
         while (len > 0) {
-            int freeBufCount = PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL - originalSegment.length;
+            int freeBufCount = segmentMaxLengthOriginal - originalSegment.length;
             if (freeBufCount == 0) {
                 // Submit task if the buffer is full and there still is more to write.
-                joinUntilMaximumQueueSize(maximumResultQueueSize - 1);
+                joinUntilMaximumQueueSize(COUNT_MAX_QUEUED_TASKS - 1);
                 submitTask(false);
             } else {
                 int toCopyCount = Math.min(len, freeBufCount);

@@ -10,9 +10,9 @@ class PngEncoderDeflaterBuffer {
     final byte[] bytes;
     int length;
 
-    PngEncoderDeflaterBuffer(PngEncoderDeflaterBufferPool pool) {
+    PngEncoderDeflaterBuffer(PngEncoderDeflaterBufferPool pool, int maxLength) {
         this.pool = Objects.requireNonNull(pool, "pool");
-        this.bytes = new byte[PngEncoderLogic.SEGMENT_MAX_LENGTH_DEFLATED];
+        this.bytes = new byte[maxLength];
         this.length = 0;
     }
 

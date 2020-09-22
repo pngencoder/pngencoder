@@ -12,9 +12,6 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 class PngEncoderLogic {
-    static final int SEGMENT_MAX_LENGTH_ORIGINAL = 64 * 1024;
-    static final int SEGMENT_MAX_LENGTH_DEFLATED = SEGMENT_MAX_LENGTH_ORIGINAL + (SEGMENT_MAX_LENGTH_ORIGINAL >> 3);
-
     // In hex: 89 50 4E 47 0D 0A 1A 0A
     // This is the "file beginning" aka "header" aka "signature" aka "magicnumber".
     // https://en.wikipedia.org/wiki/Portable_Network_Graphics#File_header
@@ -78,14 +75,16 @@ class PngEncoderLogic {
         PngEncoderIdatChunksOutputStream idatChunksOutputStream = new PngEncoderIdatChunksOutputStream(countingOutputStream);
         final byte[] scanlineBytes = PngEncoderScanlineUtil.get(bufferedImage);
 
-        if (scanlineBytes.length <= PngEncoderLogic.SEGMENT_MAX_LENGTH_ORIGINAL || !multiThreadedCompressionEnabled) {
+        final int segmentMaxLengthOriginal = PngEncoderDeflaterOutputStream.getSegmentMaxLengthOriginal(scanlineBytes.length);
+
+        if (scanlineBytes.length <= segmentMaxLengthOriginal || !multiThreadedCompressionEnabled) {
             Deflater deflater = new Deflater(compressionLevel);
             DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(idatChunksOutputStream, deflater);
             deflaterOutputStream.write(scanlineBytes);
             deflaterOutputStream.finish();
             deflaterOutputStream.flush();
         } else {
-            PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(idatChunksOutputStream, compressionLevel);
+            PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(idatChunksOutputStream, compressionLevel, segmentMaxLengthOriginal);
             deflaterOutputStream.write(scanlineBytes);
             deflaterOutputStream.finish();
         }

@@ -17,17 +17,17 @@ import java.util.concurrent.TimeUnit;
 /**
  * Benchmark                                                           Mode  Cnt    Score   Error  Units
  *
- * PngEncoderBenchmarkPngEncoderVsImageIO.random1024x1024ImageIO      thrpt         5.176          ops/s
- * PngEncoderBenchmarkPngEncoderVsImageIO.random1024x1024PngEncoder   thrpt        40.425          ops/s
- * 40.425 / 5.176 = 7.8 times faster
+ * PngEncoderBenchmarkPngEncoderVsImageIO.random1024x1024ImageIO      thrpt         5.150          ops/s
+ * PngEncoderBenchmarkPngEncoderVsImageIO.random1024x1024PngEncoder   thrpt        36.324          ops/s
+ * 36.324 / 5.150 = 7.1 times faster
  *
- * PngEncoderBenchmarkPngEncoderVsImageIO.logo2121x350ImageIO         thrpt        25.561          ops/s
- * PngEncoderBenchmarkPngEncoderVsImageIO.logo2121x350PngEncoder      thrpt       134.061          ops/s
- * 134.061 / 25.561 = 5.2 times faster
+ * PngEncoderBenchmarkPngEncoderVsImageIO.logo2121x350ImageIO         thrpt        24.857          ops/s
+ * PngEncoderBenchmarkPngEncoderVsImageIO.logo2121x350PngEncoder      thrpt       127.034          ops/s
+ * 127.034 / 24.857 = 5.1 times faster
  *
  * PngEncoderBenchmarkPngEncoderVsImageIO.looklet4900x6000ImageIO     thrpt         0.029          ops/s
- * PngEncoderBenchmarkPngEncoderVsImageIO.looklet4900x6000PngEncoder  thrpt         0.201          ops/s
- * 0.201 / 0.029 = 6.9 times faster
+ * PngEncoderBenchmarkPngEncoderVsImageIO.looklet4900x6000PngEncoder  thrpt         0.159          ops/s
+ * 0.159 / 0.029 = 5.5 times faster
  */
 public class PngEncoderBenchmarkPngEncoderVsImageIO {
     private static final Options OPTIONS = new OptionsBuilder()
