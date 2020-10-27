@@ -1,7 +1,7 @@
 package com.pngencoder;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
@@ -43,7 +43,7 @@ public class PngEncoderBenchmarkPngEncoderVsImageIO {
             .measurementTime(TimeValue.seconds(5))
             .build();
 
-    @Ignore("run manually")
+    @Disabled("run manually")
     @Test
     public void runBenchmark() throws Exception {
         new Runner(OPTIONS).run();

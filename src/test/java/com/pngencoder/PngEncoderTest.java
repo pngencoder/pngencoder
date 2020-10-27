@@ -1,6 +1,6 @@
 package com.pngencoder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -14,8 +14,9 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageInputStream;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PngEncoderTest {
     public static final String VALID_CHUNK_TYPE = "IDAT";
@@ -175,19 +176,19 @@ public class PngEncoderTest {
         }
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testAsChunkTypeNull() {
-        PngEncoderLogic.asChunk(null, new byte[1]);
+        assertThrows(NullPointerException.class, () -> PngEncoderLogic.asChunk(null, new byte[1]));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAsChunkTypeInvalid() {
-        PngEncoderLogic.asChunk("chunk types must be four characters long", new byte[1]);
+        assertThrows(IllegalArgumentException.class, () -> PngEncoderLogic.asChunk("chunk types must be four characters long", new byte[1]));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testAsChunkNullBytes() {
-        PngEncoderLogic.asChunk(VALID_CHUNK_TYPE, null);
+        assertThrows(NullPointerException.class, () -> PngEncoderLogic.asChunk(VALID_CHUNK_TYPE, null));
     }
 
     @Test

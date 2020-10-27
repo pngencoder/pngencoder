@@ -1,6 +1,8 @@
 package com.pngencoder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PngEncoderVerificationUtilTest {
     @Test
@@ -8,9 +10,9 @@ public class PngEncoderVerificationUtilTest {
         PngEncoderVerificationUtil.verifyCompressionLevel(-1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void verifyCompressionLevelRejectsMinusTwo() {
-        PngEncoderVerificationUtil.verifyCompressionLevel(-2);
+        assertThrows(IllegalArgumentException.class, () -> PngEncoderVerificationUtil.verifyCompressionLevel(-2));
     }
 
     @Test
@@ -18,9 +20,9 @@ public class PngEncoderVerificationUtilTest {
         PngEncoderVerificationUtil.verifyCompressionLevel(9);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void verifyCompressionLevelRejectsTen() {
-        PngEncoderVerificationUtil.verifyCompressionLevel(10);
+        assertThrows(IllegalArgumentException.class, () -> PngEncoderVerificationUtil.verifyCompressionLevel(10));
     }
 
     @Test
@@ -28,8 +30,8 @@ public class PngEncoderVerificationUtilTest {
         PngEncoderVerificationUtil.verifyChunkType("IDAT");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void verifyChunkTypeRejectsLorem() {
-        PngEncoderVerificationUtil.verifyChunkType("Lorem");
+        assertThrows(IllegalArgumentException.class, () -> PngEncoderVerificationUtil.verifyChunkType("Lorem"));
     }
 }
