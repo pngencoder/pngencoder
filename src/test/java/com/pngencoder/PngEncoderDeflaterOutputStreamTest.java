@@ -16,7 +16,7 @@ import java.util.zip.InflaterOutputStream;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PngEncoderDeflaterOutputStreamTest {
     private static final int SEGMENT_MAX_LENGTH_ORIGINAL = 64 * 1024;

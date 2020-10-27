@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.util.zip.Adler32;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PngEncoderDeflaterSegmentResultTest {
     @Test
