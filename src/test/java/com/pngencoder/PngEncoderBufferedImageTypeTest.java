@@ -1,11 +1,12 @@
 package com.pngencoder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PngEncoderBufferedImageTypeTest {
     @Test
@@ -46,9 +47,10 @@ public class PngEncoderBufferedImageTypeTest {
         new BufferedImage(1, 1, PngEncoderBufferedImageType.values().length - 1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void containsAllBufferedImageTypes2() {
-        new BufferedImage(1, 1, PngEncoderBufferedImageType.values().length);
+        assertThrows(IllegalArgumentException.class,
+                () -> new BufferedImage(1, 1, PngEncoderBufferedImageType.values().length));
     }
 
     @Test

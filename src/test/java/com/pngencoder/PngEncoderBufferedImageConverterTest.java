@@ -1,12 +1,12 @@
 package com.pngencoder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PngEncoderBufferedImageConverterTest {
     @Test

@@ -1,7 +1,7 @@
 package com.pngencoder;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -9,7 +9,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 public class PngEncoderBenchmarkAssorted {
-    @Ignore("run manually")
+    @Disabled("run manually")
     @Test
     public void runBenchmarkIntelliJIdeaProfilerPngEncoder() {
         final int times = 10;
@@ -19,7 +19,7 @@ public class PngEncoderBenchmarkAssorted {
         }
     }
 
-    @Ignore("run manually")
+    @Disabled("run manually")
     @Test
     public void runBenchmarkIntelliJIdeaProfilerImageIO() {
         final int times = 1;
@@ -29,7 +29,7 @@ public class PngEncoderBenchmarkAssorted {
         }
     }
 
-    @Ignore("run manually")
+    @Disabled("run manually")
     @Test
     public void runBenchmarkCustom() throws IOException {
         Timing.message("started");
