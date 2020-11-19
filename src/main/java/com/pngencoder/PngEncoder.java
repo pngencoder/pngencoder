@@ -18,16 +18,19 @@ public class PngEncoder {
     private final int compressionLevel;
     private final boolean multiThreadedCompressionEnabled;
     private final PngEncoderSrgbRenderingIntent srgbRenderingIntent;
+    private final PngEncoderPhysicalPixelDimensions physicalPixelDimensions;
 
     private PngEncoder(
             BufferedImage bufferedImage,
             int compressionLevel,
             boolean multiThreadedCompressionEnabled,
-            PngEncoderSrgbRenderingIntent srgbRenderingIntent) {
+            PngEncoderSrgbRenderingIntent srgbRenderingIntent,
+            PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
         this.bufferedImage = bufferedImage;
         this.compressionLevel = PngEncoderVerificationUtil.verifyCompressionLevel(compressionLevel);
         this.multiThreadedCompressionEnabled = multiThreadedCompressionEnabled;
         this.srgbRenderingIntent = srgbRenderingIntent;
+        this.physicalPixelDimensions = physicalPixelDimensions;
     }
 
     public PngEncoder() {
@@ -35,23 +38,28 @@ public class PngEncoder {
                 null,
                 DEFAULT_COMPRESSION_LEVEL,
                 true,
+                null,
                 null);
     }
 
     public PngEncoder withBufferedImage(BufferedImage bufferedImage) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
     }
 
     public PngEncoder withCompressionLevel(int compressionLevel) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
     }
 
     public PngEncoder withMultiThreadedCompressionEnabled(boolean multiThreadedCompressionEnabled) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
     }
 
     public PngEncoder withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent srgbRenderingIntent) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
+    }
+
+    public PngEncoder withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
     }
 
     public BufferedImage getBufferedImage() {
@@ -72,7 +80,7 @@ public class PngEncoder {
 
     public int toStream(OutputStream outputStream) {
         try {
-            return PngEncoderLogic.encode(bufferedImage, outputStream, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent);
+            return PngEncoderLogic.encode(bufferedImage, outputStream, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
