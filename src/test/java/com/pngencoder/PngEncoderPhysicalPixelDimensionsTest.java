@@ -24,7 +24,7 @@ public class PngEncoderPhysicalPixelDimensionsTest {
 
         assertThat(physicalPixelDimensions.getPixelsPerUnitX(), is(2));
         assertThat(physicalPixelDimensions.getPixelsPerUnitY(), is(3));
-        assertThat(physicalPixelDimensions.getUnit(), is(PngEncoderPhysicalPixelDimensions.Unit.UKNOWN));
+        assertThat(physicalPixelDimensions.getUnit(), is(PngEncoderPhysicalPixelDimensions.Unit.UNKNOWN));
     }
 
     @Test

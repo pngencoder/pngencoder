@@ -11,7 +11,7 @@ package com.pngencoder;
 public class PngEncoderPhysicalPixelDimensions {
 
     public enum Unit {
-        UKNOWN((byte) 0),
+        UNKNOWN((byte) 0),
         METER((byte) 1);
 
         private final byte value;
@@ -57,7 +57,7 @@ public class PngEncoderPhysicalPixelDimensions {
     }
 
     public static PngEncoderPhysicalPixelDimensions aspectRatio(int pixelsPerUnitX, int pixelsPerUnitY) {
-        return new PngEncoderPhysicalPixelDimensions(pixelsPerUnitX, pixelsPerUnitY, Unit.UKNOWN);
+        return new PngEncoderPhysicalPixelDimensions(pixelsPerUnitX, pixelsPerUnitY, Unit.UNKNOWN);
     }
 
     public int getPixelsPerUnitX() {
