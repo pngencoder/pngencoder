@@ -1,7 +1,7 @@
 package com.pngencoder;
 
 /**
- * Represents PNG physical piel dimensions
+ * Represents PNG physical pixel dimensions
  *
  * Use on of the static methods to create physical pixel dimensions based
  * on pixels per meter, dots per inch or a unit-less aspect ratio.
