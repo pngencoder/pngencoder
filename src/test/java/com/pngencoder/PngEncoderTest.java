@@ -194,4 +194,17 @@ public class PngEncoderTest {
         assertThrows(IllegalArgumentException.class, () -> encoder.withCompressionLevel(-2));
         assertThrows(IllegalArgumentException.class, () -> encoder.withCompressionLevel(10));
     }
+
+    @Test
+    public void testEncodeWithoutImage() {
+        // Document the fact that, at the moment, attempting to encode without providing an
+        // image throws NullPointException.
+        PngEncoder emptyEncoder = new PngEncoder();
+        assertThrows(NullPointerException.class, () -> emptyEncoder.toBytes());
+
+        PngEncoder encoderWithoutImage = new PngEncoder()
+                .withCompressionLevel(9)
+                .withMultiThreadedCompressionEnabled(true);
+        assertThrows(NullPointerException.class, () -> encoderWithoutImage.toBytes());
+    }
 }
