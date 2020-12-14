@@ -14,6 +14,7 @@ import javax.imageio.stream.ImageInputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PngEncoderTest {
     private static final int WHITE = 0xFFFFFFFF;
@@ -181,5 +182,16 @@ public class PngEncoderTest {
             reader.setInput(input);
             return reader.getImageMetadata(0);
         }
+    }
+
+    @Test
+    public void testCompressionLevelRange() {
+        // Compression level value must be between -1 and 9 inclusive.
+        PngEncoder encoder = new PngEncoder();
+        for (int i=-1; i<10; i++) {
+            encoder.withCompressionLevel(i);
+        }
+        assertThrows(IllegalArgumentException.class, () -> encoder.withCompressionLevel(-2));
+        assertThrows(IllegalArgumentException.class, () -> encoder.withCompressionLevel(10));
     }
 }
