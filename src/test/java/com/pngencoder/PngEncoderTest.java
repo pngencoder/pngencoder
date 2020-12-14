@@ -27,9 +27,15 @@ public class PngEncoderTest {
     private static final int RED = 0xFFFF0000;
     private static final int BLUE = 0xFF0000FF;
 
+    private static final BufferedImage ONE_PIXEL = PngEncoderBufferedImageConverter.createFromIntArgb(
+            new int[1], 1, 1);
+
     @Test
-    public void testEncode() throws IOException {
-        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1);
+    public void testEncode() {
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
         int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
@@ -43,8 +49,12 @@ public class PngEncoderTest {
     }
 
     @Test
-    public void testEncodeWithSrgb() throws IOException {
-        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, true);
+    public void testEncodeWithSrgb() {
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent.PERCEPTUAL)
+                .toBytes();
 
         int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
         int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
@@ -68,8 +78,12 @@ public class PngEncoderTest {
                 WHITE, BLACK, RED,
                 GREEN, WHITE, BLUE
         };
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int[] actual = readWithImageIOgetRGB(bytes);
         int[] expected = image;
@@ -84,8 +98,12 @@ public class PngEncoderTest {
         for (int x = 0; x < width; x++) {
             image[x] = x << 24;
         }
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int[] actual = readWithImageIOgetRGB(bytes);
         int[] expected = image;
@@ -101,8 +119,12 @@ public class PngEncoderTest {
             int pixel = (x << 24) + (x << 16);
             image[x] = pixel;
         }
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int[] actual = readWithImageIOgetRGB(bytes);
         int[] expected = image;
@@ -118,8 +140,13 @@ public class PngEncoderTest {
                 WHITE, BLACK, RED,
                 GREEN, WHITE, BLUE
         };
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height, true);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent.PERCEPTUAL)
+                .toBytes();
 
         IIOMetadata metadata = getImageMetaDataWithImageIO(bytes);
         IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
@@ -127,21 +154,6 @@ public class PngEncoderTest {
         assertThat(root.getElementsByTagName("sRGB").getLength(), is(1));
         assertThat(root.getElementsByTagName("cHRM").getLength(), is(1));
         assertThat(root.getElementsByTagName("gAMA").getLength(), is(1));
-    }
-
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height) {
-        return encodeToBytesIntArgb(image, width, height, false);
-    }
-
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height, boolean addSrgbChunk) {
-        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(image, width, height);
-        PngEncoder pngEncoder = new PngEncoder()
-                .withBufferedImage(bufferedImage)
-                .withCompressionLevel(1);
-        if (addSrgbChunk) {
-            pngEncoder = pngEncoder.withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent.PERCEPTUAL);
-        }
-        return pngEncoder.toBytes();
     }
 
     private static int[] readWithImageIOgetRGB(byte[] fileBytes) throws IOException {
