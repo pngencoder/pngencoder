@@ -127,7 +127,7 @@ public class PngEncoder {
 
     /**
      * Returns the {@code PngEncoderSrgbRenderingIntent} provided at construction time.
-     * @returnthe {@code PngEncoderSrgbRenderingIntent} provided at construction time
+     * @return the {@code PngEncoderSrgbRenderingIntent} provided at construction time
      */
     public PngEncoderSrgbRenderingIntent getSrgbRenderingIntent() {
         return srgbRenderingIntent;
@@ -135,7 +135,7 @@ public class PngEncoder {
 
     /**
      * Encodes PngEncoder to outputStream.
-     * @param outputStream
+     * @param outputStream destination of the encoding data
      * @throws NullPointerException if the image has not been set.
      * @return number of bytes written
      */
@@ -149,7 +149,7 @@ public class PngEncoder {
 
     /**
      * Encodes PngEncoder and saves data into {@code filePath}.
-     * @param filePath
+     * @param filePath destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
      * @return number of bytes written
@@ -164,7 +164,7 @@ public class PngEncoder {
 
     /**
      * Encodes PngEncoder and saves data into {@code file}.
-     * @param file
+     * @param file destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
      * @return number of bytes written
@@ -175,7 +175,7 @@ public class PngEncoder {
 
     /**
      * Encodes PngEncoder and saves data into {@code fileName}.
-     * @param fileName
+     * @param fileName destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
      * @return number of bytes written
