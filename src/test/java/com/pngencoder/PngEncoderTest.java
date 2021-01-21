@@ -1,11 +1,15 @@
 package com.pngencoder;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.metadata.IIOMetadata;
@@ -14,6 +18,7 @@ import javax.imageio.stream.ImageInputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PngEncoderTest {
@@ -184,15 +189,21 @@ public class PngEncoderTest {
         }
     }
 
-    @Test
-    public void testCompressionLevelRange() {
+    @ParameterizedTest()
+    @MethodSource("validCompressionLevels")
+    public void validCompressionLevel(int compressionLevel) {
+        assertDoesNotThrow(() -> new PngEncoder().withCompressionLevel(compressionLevel));
+    }
+
+    static IntStream validCompressionLevels() {
         // Compression level value must be between -1 and 9 inclusive.
-        PngEncoder encoder = new PngEncoder();
-        for (int i=-1; i<10; i++) {
-            encoder.withCompressionLevel(i);
-        }
-        assertThrows(IllegalArgumentException.class, () -> encoder.withCompressionLevel(-2));
-        assertThrows(IllegalArgumentException.class, () -> encoder.withCompressionLevel(10));
+        return IntStream.rangeClosed(-1, 9);
+    }
+
+    @ParameterizedTest()
+    @ValueSource(ints = { -2, 10 })
+    public void invalidCompressionLevel(int compressionLevel) {
+        assertThrows(IllegalArgumentException.class, () -> new PngEncoder().withCompressionLevel(compressionLevel));
     }
 
     @Test
