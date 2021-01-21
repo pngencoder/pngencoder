@@ -84,9 +84,9 @@ public class PngEncoder {
 
     /**
      * Returns a new PngEncoder which has the same configuration as this one except {@code srgbRenderingIntent}.
-     * The new PngEncoder will use the provided {@code srgbRenderingIntent}.
+     * The new PngEncoder will add an sRGB chunk to the encoded PNG and use the provided {@code srgbRenderingIntent}.
      *
-     * @param srgbRenderingIntent todo
+     * @param srgbRenderingIntent the rendering intent that should be used when displaying the image
      * @return a new PngEncoder
      */
     public PngEncoder withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent srgbRenderingIntent) {
