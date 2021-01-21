@@ -27,14 +27,6 @@ public class PngEncoder {
     private final boolean multiThreadedCompressionEnabled;
     private final PngEncoderSrgbRenderingIntent srgbRenderingIntent;
 
-    /**
-     * Constructs a PngEncoder based on the provided parameters.
-     *
-     * @param bufferedImage input image
-     * @param compressionLevel compression level to be applied (must be between -1 and 9 inclusive)
-     * @param multiThreadedCompressionEnabled when {@code true}, multithreaded compression will be used
-     * @param srgbRenderingIntent todo
-     */
     private PngEncoder(
             BufferedImage bufferedImage,
             int compressionLevel,
