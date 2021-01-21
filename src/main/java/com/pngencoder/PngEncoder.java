@@ -110,8 +110,8 @@ public class PngEncoder {
     }
 
     /**
-     * Encodes PngEncoder to outputStream.
-     * @param outputStream destination of the encoding data
+     * Encodes the image to outputStream.
+     * @param outputStream destination of the encoded data
      * @throws NullPointerException if the image has not been set.
      * @return number of bytes written
      */
@@ -124,7 +124,7 @@ public class PngEncoder {
     }
 
     /**
-     * Encodes PngEncoder and saves data into {@code filePath}.
+     * Encodes the image and saves data into {@code filePath}.
      * @param filePath destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
@@ -139,7 +139,7 @@ public class PngEncoder {
     }
 
     /**
-     * Encodes PngEncoder and saves data into {@code file}.
+     * Encodes the image and saves data into {@code file}.
      * @param file destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
@@ -150,7 +150,7 @@ public class PngEncoder {
     }
 
     /**
-     * Encodes PngEncoder and saves data into {@code fileName}.
+     * Encodes the image and saves data into {@code fileName}.
      * @param fileName destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
@@ -161,7 +161,7 @@ public class PngEncoder {
     }
 
     /**
-     * Encodes PngEncoder and return data as {@code byte[]}.
+     * Encodes the image and returns data as {@code byte[]}.
      * @throws NullPointerException if the image has not been set.
      * @return encoded data
      */
