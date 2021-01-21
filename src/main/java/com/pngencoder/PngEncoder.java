@@ -93,34 +93,18 @@ public class PngEncoder {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent);
     }
 
-    /**
-     * Returns the {@code BufferedImage} provided at construction time.
-     * @return the {@code BufferedImage} provided at construction time
-     */
     public BufferedImage getBufferedImage() {
         return bufferedImage;
     }
 
-    /**
-     * Returns the compression level provided at construction time.
-     * @return the compression level provided at construction time
-     */
     public int getCompressionLevel() {
         return compressionLevel;
     }
 
-    /**
-     * Returns the multiThreadedCompressionEnabled provided at construction time.
-     * @return the multiThreadedCompressionEnabled provided at construction time
-     */
     public boolean isMultiThreadedCompressionEnabled() {
         return multiThreadedCompressionEnabled;
     }
 
-    /**
-     * Returns the {@code PngEncoderSrgbRenderingIntent} provided at construction time.
-     * @return the {@code PngEncoderSrgbRenderingIntent} provided at construction time
-     */
     public PngEncoderSrgbRenderingIntent getSrgbRenderingIntent() {
         return srgbRenderingIntent;
     }
