@@ -1,14 +1,16 @@
 package com.pngencoder;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.w3c.dom.Element;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.zip.CRC32;
+import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.metadata.IIOMetadata;
@@ -17,20 +19,25 @@ import javax.imageio.stream.ImageInputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PngEncoderTest {
-    public static final String VALID_CHUNK_TYPE = "IDAT";
-
     private static final int WHITE = 0xFFFFFFFF;
     private static final int BLACK = 0xFF000000;
     private static final int GREEN = 0XFF00FF00;
     private static final int RED = 0xFFFF0000;
     private static final int BLUE = 0xFF0000FF;
 
+    private static final BufferedImage ONE_PIXEL = PngEncoderBufferedImageConverter.createFromIntArgb(
+            new int[1], 1, 1);
+
     @Test
-    public void testEncode() throws IOException {
-        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1);
+    public void testEncode() {
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
         int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
@@ -44,8 +51,12 @@ public class PngEncoderTest {
     }
 
     @Test
-    public void testEncodeWithSrgb() throws IOException {
-        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, true, null);
+    public void testEncodeWithSrgb() {
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent.PERCEPTUAL)
+                .toBytes();
 
         int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
         int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
@@ -62,8 +73,12 @@ public class PngEncoderTest {
     }
 
     @Test
-    public void testEncodeWithPhysicalPixelDimensions() throws IOException {
-        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, false, PngEncoderPhysicalPixelDimensions.dotsPerInch(300));
+    public void testEncodeWithPhysicalPixelDimensions() {
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions.dotsPerInch(300))
+                .toBytes();
 
         int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
         int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
@@ -85,8 +100,12 @@ public class PngEncoderTest {
                 WHITE, BLACK, RED,
                 GREEN, WHITE, BLUE
         };
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int[] actual = readWithImageIOgetRGB(bytes);
         int[] expected = image;
@@ -101,8 +120,12 @@ public class PngEncoderTest {
         for (int x = 0; x < width; x++) {
             image[x] = x << 24;
         }
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int[] actual = readWithImageIOgetRGB(bytes);
         int[] expected = image;
@@ -118,8 +141,12 @@ public class PngEncoderTest {
             int pixel = (x << 24) + (x << 16);
             image[x] = pixel;
         }
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .toBytes();
 
         int[] actual = readWithImageIOgetRGB(bytes);
         int[] expected = image;
@@ -135,8 +162,13 @@ public class PngEncoderTest {
                 WHITE, BLACK, RED,
                 GREEN, WHITE, BLUE
         };
-
-        byte[] bytes = encodeToBytesIntArgb(image, width, height, true, null);
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(
+                image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent.PERCEPTUAL)
+                .toBytes();
 
         IIOMetadata metadata = getImageMetaDataWithImageIO(bytes);
         IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
@@ -149,7 +181,11 @@ public class PngEncoderTest {
     @Test
     public void testEncodeWithPhysicalPixelDimensionsAndReadMetadata() throws IOException {
         int dotsPerInch = 150;
-        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, false, PngEncoderPhysicalPixelDimensions.dotsPerInch(dotsPerInch));
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions.dotsPerInch(dotsPerInch))
+                .toBytes();
 
         IIOMetadata metadata = getImageMetaDataWithImageIO(bytes);
         IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree("javax_imageio_1.0");
@@ -160,24 +196,6 @@ public class PngEncoderTest {
         float mmPerInch = 25.4f;
         assertThat(Math.round(mmPerInch/horizontalPixelSize), is(dotsPerInch));
         assertThat(Math.round(mmPerInch/verticalPixelSize), is(dotsPerInch));
-    }
-
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height) {
-        return encodeToBytesIntArgb(image, width, height, false, null);
-    }
-
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height, boolean addSrgbChunk, PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
-        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(image, width, height);
-        PngEncoder pngEncoder = new PngEncoder()
-                .withBufferedImage(bufferedImage)
-                .withCompressionLevel(1);
-        if (addSrgbChunk) {
-            pngEncoder = pngEncoder.withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent.PERCEPTUAL);
-        }
-        if (physicalPixelDimensions != null) {
-            pngEncoder = pngEncoder.withPhysicalPixelDimensions(physicalPixelDimensions);
-        }
-        return pngEncoder.toBytes();
     }
 
     private static int[] readWithImageIOgetRGB(byte[] fileBytes) throws IOException {
@@ -212,90 +230,33 @@ public class PngEncoderTest {
         }
     }
 
-    @Test
-    public void testAsChunkTypeNull() {
-        assertThrows(NullPointerException.class, () -> PngEncoderLogic.asChunk(null, new byte[1]));
+    @ParameterizedTest()
+    @MethodSource("validCompressionLevels")
+    public void validCompressionLevel(int compressionLevel) {
+        assertDoesNotThrow(() -> new PngEncoder().withCompressionLevel(compressionLevel));
+    }
+
+    static IntStream validCompressionLevels() {
+        // Compression level value must be between -1 and 9 inclusive.
+        return IntStream.rangeClosed(-1, 9);
+    }
+
+    @ParameterizedTest()
+    @ValueSource(ints = { -2, 10 })
+    public void invalidCompressionLevel(int compressionLevel) {
+        assertThrows(IllegalArgumentException.class, () -> new PngEncoder().withCompressionLevel(compressionLevel));
     }
 
     @Test
-    public void testAsChunkTypeInvalid() {
-        assertThrows(IllegalArgumentException.class, () -> PngEncoderLogic.asChunk("chunk types must be four characters long", new byte[1]));
-    }
+    public void testEncodeWithoutImage() {
+        // Document the fact that, at the moment, attempting to encode without providing an
+        // image throws NullPointException.
+        PngEncoder emptyEncoder = new PngEncoder();
+        assertThrows(NullPointerException.class, () -> emptyEncoder.toBytes());
 
-    @Test
-    public void testAsChunkNullBytes() {
-        assertThrows(NullPointerException.class, () -> PngEncoderLogic.asChunk(VALID_CHUNK_TYPE, null));
-    }
-
-    @Test
-    public void testAsChunkAdds12Bytes() {
-        byte[] data = {5};
-        byte[] chunk = PngEncoderLogic.asChunk(VALID_CHUNK_TYPE, data);
-
-        int expected = 13;
-        int actual = chunk.length;
-        assertThat(actual, is(expected));
-    }
-
-    @Test
-    public void testAsChunkFirstByteIsSizeOfData() {
-        byte[] data = {5, 7};
-        byte[] chunk = PngEncoderLogic.asChunk(VALID_CHUNK_TYPE, data);
-
-        byte[] expected = intToBytes(data.length);
-        assertThat(chunk[0], is(expected[0]));
-        assertThat(chunk[1], is(expected[1]));
-        assertThat(chunk[2], is(expected[2]));
-        assertThat(chunk[3], is(expected[3]));
-    }
-
-    @Test
-    public void testAsChunkCrcIsCalculatedFromTypeAndData() {
-        byte[] data = {5, 7};
-        byte[] chunk = PngEncoderLogic.asChunk(VALID_CHUNK_TYPE, data);
-
-        ByteBuffer byteBuffer = ByteBuffer.allocate(6);
-        byteBuffer.mark();
-        byteBuffer.put(VALID_CHUNK_TYPE.getBytes());
-        byteBuffer.put(data);
-        byteBuffer.reset();
-        int expectedCrc = PngEncoderLogic.getCrc32(byteBuffer);
-
-        byte[] expected = intToBytes(expectedCrc);
-        assertThat(chunk[10], is(expected[0]));
-        assertThat(chunk[11], is(expected[1]));
-        assertThat(chunk[12], is(expected[2]));
-        assertThat(chunk[13], is(expected[3]));
-    }
-
-    @Test
-    public void testCrcWithPartialByteBuffer() {
-        byte[] b = {5};
-
-        ByteBuffer byteBuffer = ByteBuffer.allocate(20);
-
-        byteBuffer.put("garbage".getBytes());
-
-        byteBuffer.mark();
-        ByteBuffer slice = byteBuffer.slice().asReadOnlyBuffer();
-        byteBuffer.put(b);
-        slice.limit(b.length);
-        byteBuffer.put("more garbage".getBytes());
-
-        int actual = PngEncoderLogic.getCrc32(slice);
-        int expected = getSimpleCrc(b);
-        assertThat(actual, is(expected));
-    }
-
-    private static int getSimpleCrc(byte[] b) {
-        CRC32 crc32 = new CRC32();
-        crc32.update(b);
-        return (int) crc32.getValue();
-    }
-
-    private static byte[] intToBytes(int val) {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4);
-        byteBuffer.putInt(val);
-        return byteBuffer.array();
+        PngEncoder encoderWithoutImage = new PngEncoder()
+                .withCompressionLevel(9)
+                .withMultiThreadedCompressionEnabled(true);
+        assertThrows(NullPointerException.class, () -> encoderWithoutImage.toBytes());
     }
 }
