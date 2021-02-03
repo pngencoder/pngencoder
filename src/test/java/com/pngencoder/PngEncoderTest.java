@@ -1,6 +1,7 @@
 package com.pngencoder;
 
 import org.junit.jupiter.api.Test;
+import org.w3c.dom.Element;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -44,7 +45,7 @@ public class PngEncoderTest {
 
     @Test
     public void testEncodeWithSrgb() throws IOException {
-        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, true);
+        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, true, null);
 
         int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
         int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
@@ -55,6 +56,22 @@ public class PngEncoderTest {
         int iendLength = PngEncoderLogic.FILE_ENDING.length;
 
         int expected = pngHeaderLength + ihdrLength + srgbLength + gamaLength + chrmLength + idatLength + iendLength;
+        int actual = bytes.length;
+
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testEncodeWithPhysicalPixelDimensions() throws IOException {
+        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, false, PngEncoderPhysicalPixelDimensions.dotsPerInch(300));
+
+        int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
+        int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
+        int physLength = 21; // length(4)+"pHYs"(4)+values(9)+crc(4)
+        int idatLength = 23; // length(4)+"IDAT"(4)+compressed scanline(11)+crc(4)
+        int iendLength = PngEncoderLogic.FILE_ENDING.length;
+
+        int expected = pngHeaderLength + ihdrLength + physLength + idatLength + iendLength;
         int actual = bytes.length;
 
         assertThat(actual, is(expected));
@@ -119,7 +136,7 @@ public class PngEncoderTest {
                 GREEN, WHITE, BLUE
         };
 
-        byte[] bytes = encodeToBytesIntArgb(image, width, height, true);
+        byte[] bytes = encodeToBytesIntArgb(image, width, height, true, null);
 
         IIOMetadata metadata = getImageMetaDataWithImageIO(bytes);
         IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
@@ -129,17 +146,36 @@ public class PngEncoderTest {
         assertThat(root.getElementsByTagName("gAMA").getLength(), is(1));
     }
 
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height) {
-        return encodeToBytesIntArgb(image, width, height, false);
+    @Test
+    public void testEncodeWithPhysicalPixelDimensionsAndReadMetadata() throws IOException {
+        int dotsPerInch = 150;
+        byte[] bytes = encodeToBytesIntArgb(new int[1], 1, 1, false, PngEncoderPhysicalPixelDimensions.dotsPerInch(dotsPerInch));
+
+        IIOMetadata metadata = getImageMetaDataWithImageIO(bytes);
+        IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree("javax_imageio_1.0");
+        float horizontalPixelSize = Float.parseFloat(((Element) root.getElementsByTagName("HorizontalPixelSize").item(0)).getAttribute("value"));
+        float verticalPixelSize = Float.parseFloat(((Element) root.getElementsByTagName("VerticalPixelSize").item(0)).getAttribute("value"));
+
+        // Standard metadata contains the width/height of a pixel in millimeters
+        float mmPerInch = 25.4f;
+        assertThat(Math.round(mmPerInch/horizontalPixelSize), is(dotsPerInch));
+        assertThat(Math.round(mmPerInch/verticalPixelSize), is(dotsPerInch));
     }
 
-    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height, boolean addSrgbChunk) {
+    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height) {
+        return encodeToBytesIntArgb(image, width, height, false, null);
+    }
+
+    private static byte[] encodeToBytesIntArgb(int[] image, int width, int height, boolean addSrgbChunk, PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
         BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(image, width, height);
         PngEncoder pngEncoder = new PngEncoder()
                 .withBufferedImage(bufferedImage)
                 .withCompressionLevel(1);
         if (addSrgbChunk) {
             pngEncoder = pngEncoder.withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent.PERCEPTUAL);
+        }
+        if (physicalPixelDimensions != null) {
+            pngEncoder = pngEncoder.withPhysicalPixelDimensions(physicalPixelDimensions);
         }
         return pngEncoder.toBytes();
     }
