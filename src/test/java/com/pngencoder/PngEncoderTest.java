@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.w3c.dom.Element;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -66,6 +67,26 @@ public class PngEncoderTest {
         int iendLength = PngEncoderLogic.FILE_ENDING.length;
 
         int expected = pngHeaderLength + ihdrLength + srgbLength + gamaLength + chrmLength + idatLength + iendLength;
+        int actual = bytes.length;
+
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testEncodeWithPhysicalPixelDimensions() {
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions.dotsPerInch(300))
+                .toBytes();
+
+        int pngHeaderLength = PngEncoderLogic.FILE_BEGINNING.length;
+        int ihdrLength = 25; // length(4)+"IHDR"(4)+values(13)+crc(4)
+        int physLength = 21; // length(4)+"pHYs"(4)+values(9)+crc(4)
+        int idatLength = 23; // length(4)+"IDAT"(4)+compressed scanline(11)+crc(4)
+        int iendLength = PngEncoderLogic.FILE_ENDING.length;
+
+        int expected = pngHeaderLength + ihdrLength + physLength + idatLength + iendLength;
         int actual = bytes.length;
 
         assertThat(actual, is(expected));
@@ -155,6 +176,26 @@ public class PngEncoderTest {
         assertThat(root.getElementsByTagName("sRGB").getLength(), is(1));
         assertThat(root.getElementsByTagName("cHRM").getLength(), is(1));
         assertThat(root.getElementsByTagName("gAMA").getLength(), is(1));
+    }
+
+    @Test
+    public void testEncodeWithPhysicalPixelDimensionsAndReadMetadata() throws IOException {
+        int dotsPerInch = 150;
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(ONE_PIXEL)
+                .withCompressionLevel(1)
+                .withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions.dotsPerInch(dotsPerInch))
+                .toBytes();
+
+        IIOMetadata metadata = getImageMetaDataWithImageIO(bytes);
+        IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree("javax_imageio_1.0");
+        float horizontalPixelSize = Float.parseFloat(((Element) root.getElementsByTagName("HorizontalPixelSize").item(0)).getAttribute("value"));
+        float verticalPixelSize = Float.parseFloat(((Element) root.getElementsByTagName("VerticalPixelSize").item(0)).getAttribute("value"));
+
+        // Standard metadata contains the width/height of a pixel in millimeters
+        float mmPerInch = 25.4f;
+        assertThat(Math.round(mmPerInch/horizontalPixelSize), is(dotsPerInch));
+        assertThat(Math.round(mmPerInch/verticalPixelSize), is(dotsPerInch));
     }
 
     private static int[] readWithImageIOgetRGB(byte[] fileBytes) throws IOException {
