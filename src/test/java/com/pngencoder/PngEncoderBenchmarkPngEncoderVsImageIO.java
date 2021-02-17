@@ -93,4 +93,19 @@ public class PngEncoderBenchmarkPngEncoderVsImageIO {
     public void logo2121x350ImageIO(BenchmarkStateLogo2121x350 state) {
         PngEncoderTestUtil.encodeWithImageIO(state.bufferedImage);
     }
+
+    @Benchmark
+    public void random1024x1024ObjectPlanetPngEncoder(BenchmarkStateRandom1024x1024 state) {
+        PngEncoderTestUtil.encodeWithObjectPlanetPngEncoder(state.bufferedImage);
+    }
+
+    @Benchmark
+    public void looklet4900x6000ObjectPlanetPngEncoder(BenchmarkStateLooklet4900x6000 state) {
+        PngEncoderTestUtil.encodeWithObjectPlanetPngEncoder(state.bufferedImage);
+    }
+
+    @Benchmark
+    public void logo2121x350ObjectPlanetPngEncoder(BenchmarkStateLogo2121x350 state) {
+        PngEncoderTestUtil.encodeWithObjectPlanetPngEncoder(state.bufferedImage);
+    }
 }

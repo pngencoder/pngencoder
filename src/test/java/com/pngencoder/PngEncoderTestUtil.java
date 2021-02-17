@@ -63,4 +63,13 @@ class PngEncoderTestUtil {
             throw new UncheckedIOException(e);
         }
     }
+
+    static void encodeWithObjectPlanetPngEncoder(BufferedImage bufferedImage) {
+        // https://www.objectplanet.com/pngencoder/
+        try {
+            new com.objectplanet.image.PngEncoder().encode(bufferedImage, NULL_OUTPUT_STREAM);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 }
