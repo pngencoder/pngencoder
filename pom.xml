@@ -38,6 +38,12 @@
             <organization>Looklet</organization>
             <organizationUrl>https://looklet.com</organizationUrl>
         </developer>
+        <developer>
+            <name>Raul Jimenez</name>
+            <email>raul.jimenez@looklet.com</email>
+            <organization>Looklet</organization>
+            <organizationUrl>https://looklet.com</organizationUrl>
+        </developer>
     </developers>
 
     <scm>
