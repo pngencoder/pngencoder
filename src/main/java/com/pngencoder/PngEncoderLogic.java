@@ -51,7 +51,7 @@ class PngEncoderLogic {
     private PngEncoderLogic() {
     }
 
-    static int encode(BufferedImage bufferedImage, OutputStream outputStream, int compressionLevel, boolean multiThreadedCompressionEnabled, PngEncoderSrgbRenderingIntent srgbRenderingIntent) throws IOException {
+    static int encode(BufferedImage bufferedImage, OutputStream outputStream, int compressionLevel, boolean multiThreadedCompressionEnabled, PngEncoderSrgbRenderingIntent srgbRenderingIntent, PngEncoderPhysicalPixelDimensions physicalPixelDimensions) throws IOException {
         Objects.requireNonNull(bufferedImage, "bufferedImage");
         Objects.requireNonNull(outputStream, "outputStream");
 
@@ -70,6 +70,10 @@ class PngEncoderLogic {
             outputStream.write(asChunk("sRGB", new byte[]{ srgbRenderingIntent.getValue() }));
             outputStream.write(asChunk("gAMA", GAMA_SRGB_VALUE));
             outputStream.write(asChunk("cHRM", CHRM_SRGB_VALUE));
+        }
+
+        if (physicalPixelDimensions != null) {
+            outputStream.write(asChunk("pHYs", getPhysicalPixelDimensions(physicalPixelDimensions)));
         }
 
         PngEncoderIdatChunksOutputStream idatChunksOutputStream = new PngEncoderIdatChunksOutputStream(countingOutputStream);
@@ -105,6 +109,14 @@ class PngEncoderLogic {
         buffer.put(IHDR_COMPRESSION_METHOD);
         buffer.put(IHDR_FILTER_METHOD);
         buffer.put(IHDR_INTERLACE_METHOD);
+        return buffer.array();
+    }
+
+    static byte[] getPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
+        ByteBuffer buffer = ByteBuffer.allocate(9);
+        buffer.putInt(physicalPixelDimensions.getPixelsPerUnitX());
+        buffer.putInt(physicalPixelDimensions.getPixelsPerUnitY());
+        buffer.put(physicalPixelDimensions.getUnit().getValue());
         return buffer.array();
     }
 

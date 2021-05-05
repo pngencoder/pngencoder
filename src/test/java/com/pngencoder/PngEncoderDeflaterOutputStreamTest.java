@@ -1,6 +1,6 @@
 package com.pngencoder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,9 +14,10 @@ import java.util.function.BiConsumer;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PngEncoderDeflaterOutputStreamTest {
     private static final int SEGMENT_MAX_LENGTH_ORIGINAL = 64 * 1024;
@@ -79,27 +80,28 @@ public class PngEncoderDeflaterOutputStreamTest {
         assertThatBytesIsSameAfterDeflateAndInflateFast(expected, MULTI_THREADED_DEFLATER);
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void constructorThrowsIOExceptionOnWritingDeflateHeaderWithRiggedOutputStream() throws IOException {
         RiggedOutputStream riggedOutputStream = new RiggedOutputStream(1);
-        new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL);
+        assertThrows(IOException.class,
+                () -> new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL));
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void finishThrowsIOExceptionOnJoiningWithRiggedOutputStream() throws IOException {
         RiggedOutputStream riggedOutputStream = new RiggedOutputStream(3);
         PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(riggedOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL);
         byte[] bytesToWrite = createRandomBytes(10);
         deflaterOutputStream.write(bytesToWrite);
-        deflaterOutputStream.finish();
+        assertThrows(IOException.class, deflaterOutputStream::finish);
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void finishThrowsIOExceptionOnJoiningWithRiggedPngEncoderDeflaterSegmentTask() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(byteArrayOutputStream, PngEncoder.DEFAULT_COMPRESSION_LEVEL, SEGMENT_MAX_LENGTH_ORIGINAL);
         deflaterOutputStream.submitTask(new RiggedPngEncoderDeflaterSegmentTask());
-        deflaterOutputStream.finish();
+        assertThrows(IOException.class, deflaterOutputStream::finish);
     }
 
     @Test
