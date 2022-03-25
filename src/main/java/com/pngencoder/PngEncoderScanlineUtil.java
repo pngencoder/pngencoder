@@ -25,7 +25,7 @@ class PngEncoderScanlineUtil {
 		// TODO: TYPE_INT_ARGB_PRE
 
 		if (type == PngEncoderBufferedImageType.TYPE_INT_BGR) {
-			return getIntRgb(raster, width, height);
+			return getIntBgr(raster, width, height);
 		}
 
 		if (type == PngEncoderBufferedImageType.TYPE_3BYTE_BGR) {
@@ -138,6 +138,28 @@ class PngEncoderScanlineUtil {
 		}
 		return bytes;
 	}
+
+	static byte[] getIntBgr(WritableRaster imageRaster, int width, int height) {
+		final int channels = 3;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		final int[] elements = new int[width];
+		for (int y = 0; y < height; y++) {
+			imageRaster.getDataElements(0, y, width, 1, elements);
+			int yRowBytesOffset = y * rowByteSize;
+
+			for (int x = 0; x < width; x++) {
+				final int element = elements[x];
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = (byte) (element); // R
+				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 3] = (byte) (element >> 16); // B
+			}
+		}
+		return bytes;
+	}
+
+
 
 	static byte[] get3ByteBgr(WritableRaster imageRaster, int width, int height) {
 		final int channels = 3;
