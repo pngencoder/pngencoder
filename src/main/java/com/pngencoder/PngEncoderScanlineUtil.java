@@ -1,172 +1,245 @@
 package com.pngencoder;
 
-import java.awt.Transparency;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DataBufferUShort;
+import java.awt.*;
+import java.awt.image.*;
 
 class PngEncoderScanlineUtil {
-    private PngEncoderScanlineUtil() {
-    }
+	private PngEncoderScanlineUtil() {
+	}
 
-    static byte[] get(BufferedImage bufferedImage) {
-        final int width = bufferedImage.getWidth();
-        final int height = bufferedImage.getHeight();
+	static byte[] get(BufferedImage bufferedImage) {
+		final int width = bufferedImage.getWidth();
+		final int height = bufferedImage.getHeight();
 
-        final PngEncoderBufferedImageType type = PngEncoderBufferedImageType.valueOf(bufferedImage);
+		final PngEncoderBufferedImageType type = PngEncoderBufferedImageType.valueOf(bufferedImage);
 
-        if (type == PngEncoderBufferedImageType.TYPE_INT_RGB) {
-            final int[] elements = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
-            return getIntRgb(elements, width, height);
-        }
+		WritableRaster raster = bufferedImage.getRaster();
+		if (type == PngEncoderBufferedImageType.TYPE_INT_RGB) {
+			return getIntRgb(raster, width, height);
+		}
 
-        if (type == PngEncoderBufferedImageType.TYPE_INT_ARGB) {
-            final int[] elements = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
-            return getIntArgb(elements, width, height);
-        }
+		if (type == PngEncoderBufferedImageType.TYPE_INT_ARGB) {
+			return getIntArgb(raster, width, height);
+		}
 
-        // TODO: TYPE_INT_ARGB_PRE
+		// TODO: TYPE_INT_ARGB_PRE
 
-        if (type == PngEncoderBufferedImageType.TYPE_INT_BGR) {
-            final int[] elements = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
-            return getIntBgr(elements, width, height);
-        }
+		if (type == PngEncoderBufferedImageType.TYPE_INT_BGR) {
+			return getIntBgr(raster, width, height);
+		}
 
-        if (type == PngEncoderBufferedImageType.TYPE_3BYTE_BGR) {
-            final byte[] elements = ((DataBufferByte) bufferedImage.getRaster().getDataBuffer()).getData();
-            return get3ByteBgr(elements, width, height);
-        }
+		if (type == PngEncoderBufferedImageType.TYPE_3BYTE_BGR) {
+			return get3ByteBgr(raster, width, height);
+		}
 
-        if (type == PngEncoderBufferedImageType.TYPE_4BYTE_ABGR) {
-            final byte[] elements = ((DataBufferByte) bufferedImage.getRaster().getDataBuffer()).getData();
-            return get4ByteAbgr(elements, width, height);
-        }
+		if (type == PngEncoderBufferedImageType.TYPE_4BYTE_ABGR) {
+			return get4ByteAbgr(raster, width, height);
+		}
 
-        // TODO: TYPE_4BYTE_ABGR_PRE
+		// TODO: TYPE_4BYTE_ABGR_PRE
 
-        // TODO: TYPE_USHORT_565_RGB
-        // TODO: TYPE_USHORT_555_RGB
+		// TODO: TYPE_USHORT_565_RGB
+		// TODO: TYPE_USHORT_555_RGB
 
-        if (type == PngEncoderBufferedImageType.TYPE_BYTE_GRAY) {
-            final byte[] elements = ((DataBufferByte) bufferedImage.getRaster().getDataBuffer()).getData();
-            return getByteGray(elements, width, height);
-        }
+		if (type == PngEncoderBufferedImageType.TYPE_BYTE_GRAY) {
+			return getByteGray(raster, width, height);
+		}
 
-        if (type == PngEncoderBufferedImageType.TYPE_USHORT_GRAY) {
-            final short[] elements = ((DataBufferUShort) bufferedImage.getRaster().getDataBuffer()).getData();
-            return getUshortGray(elements, width, height);
-        }
+		if (type == PngEncoderBufferedImageType.TYPE_USHORT_GRAY) {
+			return getUshortGray(raster, width, height);
+		}
 
-        // Fallback for unsupported type.
-        final int[] elements = bufferedImage.getRGB(0, 0, width, height, null, 0, width);
-        if (bufferedImage.getTransparency() == Transparency.OPAQUE) {
-            return getIntRgb(elements, width, height);
-        } else {
-            return getIntArgb(elements, width, height);
-        }
-    }
+		// Fallback for unsupported type.
+		final int[] elements = bufferedImage.getRGB(0, 0, width, height, null, 0, width);
+		if (bufferedImage.getTransparency() == Transparency.OPAQUE) {
+			return getIntRgb(elements, width, height);
+		} else {
+			return getIntArgb(elements, width, height);
+		}
+	}
 
-    static byte[] getIntRgb(int[] elements, int width, int height) {
-        final int channels = 3;
-        final int rowByteSize = 1 + channels*width;
-        final byte[] bytes = new byte[rowByteSize * height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                final int element = elements[y*width + x];
-                bytes[y*rowByteSize + x*channels + 1] = (byte) (element >> 16); // R
-                bytes[y*rowByteSize + x*channels + 2] = (byte) (element >> 8);  // G
-                bytes[y*rowByteSize + x*channels + 3] = (byte) (element);       // B
-            }
-        }
-        return bytes;
-    }
+	static byte[] getIntRgb(int[] elements, int width, int height) {
+		final int channels = 3;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		for (int y = 0; y < height; y++) {
+			int yOffset = y * width;
+			int yRowBytesOffset = y * rowByteSize;
 
-    static byte[] getIntArgb(int[] elements, int width, int height) {
-        final int channels = 4;
-        final int rowByteSize = 1 + channels*width;
-        final byte[] bytes = new byte[rowByteSize * height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                final int element = elements[y*width + x];
-                bytes[y*rowByteSize + x*channels + 1] = (byte) (element >> 16); // R
-                bytes[y*rowByteSize + x*channels + 2] = (byte) (element >> 8);  // G
-                bytes[y*rowByteSize + x*channels + 3] = (byte) (element);       // B
-                bytes[y*rowByteSize + x*channels + 4] = (byte) (element >> 24); // A
-            }
-        }
-        return bytes;
-    }
+			for (int x = 0; x < width; x++) {
+				final int element = elements[yOffset + x];
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 3] = (byte) (element); // B
+			}
+		}
+		return bytes;
+	}
 
-    static byte[] getIntBgr(int[] elements, int width, int height) {
-        final int channels = 3;
-        final int rowByteSize = 1 + channels*width;
-        final byte[] bytes = new byte[rowByteSize * height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                final int element = elements[y*width + x];
-                bytes[y*rowByteSize + x*channels + 1] = (byte) (element);       // R
-                bytes[y*rowByteSize + x*channels + 2] = (byte) (element >> 8);  // G
-                bytes[y*rowByteSize + x*channels + 3] = (byte) (element >> 16); // B
-            }
-        }
-        return bytes;
-    }
+	static byte[] getIntArgb(int[] elements, int width, int height) {
+		final int channels = 4;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		for (int y = 0; y < height; y++) {
+			int yOffset = y * width;
 
-    static byte[] get3ByteBgr(byte[] elements, int width, int height) {
-        final int channels = 3;
-        final int rowByteSize = 1 + channels*width;
-        final byte[] bytes = new byte[rowByteSize * height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                bytes[y*rowByteSize + x*channels + 1] = elements[(y*width + x)*3 + 2]; // R
-                bytes[y*rowByteSize + x*channels + 2] = elements[(y*width + x)*3 + 1]; // G
-                bytes[y*rowByteSize + x*channels + 3] = elements[(y*width + x)*3 + 0]; // B
-            }
-        }
-        return bytes;
-    }
+			int yRowBytesOffset = y * rowByteSize;
 
-    static byte[] get4ByteAbgr(byte[] elements, int width, int height) {
-        final int channels = 4;
-        final int rowByteSize = 1 + channels*width;
-        final byte[] bytes = new byte[rowByteSize * height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                bytes[y*rowByteSize + x*channels + 1] = elements[(y*width + x)*4 + 3]; // R
-                bytes[y*rowByteSize + x*channels + 2] = elements[(y*width + x)*4 + 2]; // G
-                bytes[y*rowByteSize + x*channels + 3] = elements[(y*width + x)*4 + 1]; // B
-                bytes[y*rowByteSize + x*channels + 4] = elements[(y*width + x)*4];     // A
-            }
-        }
-        return bytes;
-    }
+			for (int x = 0; x < width; x++) {
+				final int element = elements[yOffset + x];
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 3] = (byte) (element); // B
+				bytes[rowByteOffset + 4] = (byte) (element >> 24); // A
+			}
+		}
+		return bytes;
+	}
 
-    static byte[] getByteGray(byte[] elements, int width, int height) {
-        final int channels = 3;
-        final int rowByteSize = 1 + channels*width;
-        final byte[] bytes = new byte[rowByteSize * height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                bytes[y*rowByteSize + x*channels + 1] = elements[(y*width + x)]; // R
-                bytes[y*rowByteSize + x*channels + 2] = elements[(y*width + x)]; // G
-                bytes[y*rowByteSize + x*channels + 3] = elements[(y*width + x)]; // B
-            }
-        }
-        return bytes;
-    }
+	static byte[] getIntRgb(WritableRaster imageRaster, int width, int height) {
+		final int channels = 3;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		final int[] elements = new int[width];
+		for (int y = 0; y < height; y++) {
+			imageRaster.getDataElements(0, y, width, 1, elements);
+			int yRowBytesOffset = y * rowByteSize;
 
-    static byte[] getUshortGray(short[] elements, int width, int height) {
-        final int channels = 3;
-        final int rowByteSize = 1 + channels*width;
-        final byte[] bytes = new byte[rowByteSize * height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                bytes[y*rowByteSize + x*channels + 1] = (byte) (elements[(y*width + x)] >> 8); // R
-                bytes[y*rowByteSize + x*channels + 2] = (byte) (elements[(y*width + x)] >> 8); // G
-                bytes[y*rowByteSize + x*channels + 3] = (byte) (elements[(y*width + x)] >> 8); // B
-            }
-        }
-        return bytes;
-    }
+			for (int x = 0; x < width; x++) {
+				final int element = elements[x];
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 3] = (byte) (element); // B
+			}
+		}
+		return bytes;
+	}
+
+	static byte[] getIntArgb(WritableRaster imageRaster, int width, int height) {
+		final int channels = 4;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		final int[] elements = new int[width];
+		for (int y = 0; y < height; y++) {
+			imageRaster.getDataElements(0, y, width, 1, elements);
+			int yRowBytesOffset = y * rowByteSize;
+
+			for (int x = 0; x < width; x++) {
+				final int element = elements[x];
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 3] = (byte) (element); // B
+				bytes[rowByteOffset + 4] = (byte) (element >> 24); // A
+			}
+		}
+		return bytes;
+	}
+
+	static byte[] getIntBgr(WritableRaster imageRaster, int width, int height) {
+		final int channels = 3;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		final int[] elements = new int[width];
+		for (int y = 0; y < height; y++) {
+			imageRaster.getDataElements(0, y, width, 1, elements);
+			int yRowBytesOffset = y * rowByteSize;
+
+			for (int x = 0; x < width; x++) {
+				final int element = elements[x];
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = (byte) (element); // R
+				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 3] = (byte) (element >> 16); // B
+			}
+		}
+		return bytes;
+	}
+
+	static byte[] get3ByteBgr(WritableRaster imageRaster, int width, int height) {
+		final int channels = 3;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		final byte[] elements = new byte[width * 3];
+		for (int y = 0; y < height; y++) {
+			imageRaster.getDataElements(0, y, width, 1, elements);
+			int yRowBytesOffset = y * rowByteSize;
+
+			for (int x = 0; x < width; x++) {
+				int xOffset = (x * 3);
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = elements[xOffset + 2]; // R
+				bytes[rowByteOffset + 2] = elements[xOffset + 1]; // G
+				bytes[rowByteOffset + 3] = elements[xOffset]; // B
+			}
+		}
+		return bytes;
+	}
+
+	static byte[] get4ByteAbgr(WritableRaster imageRaster, int width, int height) {
+		final int channels = 4;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] elements = new byte[width * 4];
+		final byte[] bytes = new byte[rowByteSize * height];
+		for (int y = 0; y < height; y++) {
+			imageRaster.getDataElements(0, y, width, 1, elements);
+			int yRowBytesOffset = y * rowByteSize;
+
+			for (int x = 0; x < width; x++) {
+				int xOffset = x * 4;
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = elements[xOffset + 3]; // R
+				bytes[rowByteOffset + 2] = elements[xOffset + 2]; // G
+				bytes[rowByteOffset + 3] = elements[xOffset + 1]; // B
+				bytes[rowByteOffset + 4] = elements[xOffset]; // A
+			}
+		}
+		return bytes;
+	}
+
+	static byte[] getByteGray(WritableRaster imageRaster, int width, int height) {
+		final int channels = 3;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		final byte[] elements = new byte[width];
+		for (int y = 0; y < height; y++) {
+			imageRaster.getDataElements(0, y, width, 1, elements);
+			int yRowBytesOffset = y * rowByteSize;
+
+			for (int x = 0; x < width; x++) {
+				byte grayColorValue = elements[x];
+				int rowByteOffset = yRowBytesOffset + x * channels;
+				bytes[rowByteOffset + 1] = grayColorValue; // R
+				bytes[rowByteOffset + 2] = grayColorValue; // G
+				bytes[rowByteOffset + 3] = grayColorValue; // B
+			}
+		}
+		return bytes;
+	}
+
+	static byte[] getUshortGray(WritableRaster imageRaster, int width, int height) {
+
+		final int channels = 3;
+		final int rowByteSize = 1 + channels * width;
+		final byte[] bytes = new byte[rowByteSize * height];
+		final short[] elements = new short[width];
+
+		for (int y = 0; y < height; y++) {
+			int yRowBytesOffset = y * rowByteSize;
+			imageRaster.getDataElements(0, y, width, 1, elements);
+
+			for (int x = 0; x < width; x++) {
+				byte grayColorValue = (byte) (elements[x] >> 8);
+				int rowByteOffset = yRowBytesOffset + x * channels;
+
+				bytes[rowByteOffset + 1] = grayColorValue; // R
+				bytes[rowByteOffset + 2] = grayColorValue; // G
+				bytes[rowByteOffset + 3] = grayColorValue; // B
+			}
+		}
+		return bytes;
+	}
 }
