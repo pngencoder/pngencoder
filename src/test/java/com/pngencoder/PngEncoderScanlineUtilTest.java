@@ -51,6 +51,11 @@ public class PngEncoderScanlineUtilTest {
         assertThatScanlineOfTestImageEqualsIntRgbOrArgb(PngEncoderBufferedImageType.TYPE_USHORT_GRAY, false);
     }
 
+    @Test
+    public void getBinary() {
+        assertThatScanlineOfTestImageEqualsIntRgbOrArgb(PngEncoderBufferedImageType.TYPE_BYTE_BINARY, false);
+    }
+
     private void assertThatScanlineOfTestImageEqualsIntRgbOrArgb(PngEncoderBufferedImageType type, boolean alpha) {
         final BufferedImage bufferedImage = PngEncoderTestUtil.createTestImage(type);
         final BufferedImage bufferedImageEnsured = PngEncoderBufferedImageConverter.ensureType(bufferedImage, alpha ? PngEncoderBufferedImageType.TYPE_INT_ARGB : PngEncoderBufferedImageType.TYPE_INT_RGB);

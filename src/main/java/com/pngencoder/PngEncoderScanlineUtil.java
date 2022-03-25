@@ -69,9 +69,9 @@ class PngEncoderScanlineUtil {
 			for (int x = 0; x < width; x++) {
 				final int element = elements[yOffset + x];
 				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
-				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
-				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
-				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
+				bytes[rowByteOffset] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 1] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 2] = (byte) element; // B
 			}
 		}
 		return bytes;
@@ -89,10 +89,10 @@ class PngEncoderScanlineUtil {
 			for (int x = 0; x < width; x++) {
 				final int element = elements[yOffset + x];
 				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
-				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
-				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
-				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
-				bytes[rowByteOffset + 3] = (byte) ((element >> 24) & 0xFF); // A
+				bytes[rowByteOffset] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 1] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 2] = (byte) element; // B
+				bytes[rowByteOffset + 3] = (byte) (element >> 24); // A
 			}
 		}
 		return bytes;
@@ -110,9 +110,9 @@ class PngEncoderScanlineUtil {
 			for (int x = 0; x < width; x++) {
 				final int element = elements[x];
 				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
-				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
-				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
-				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
+				bytes[rowByteOffset] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 1] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 2] = (byte) element; // B
 			}
 		}
 		return bytes;
@@ -130,10 +130,10 @@ class PngEncoderScanlineUtil {
 			for (int x = 0; x < width; x++) {
 				final int element = elements[x];
 				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
-				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
-				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
-				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
-				bytes[rowByteOffset + 3] = (byte) ((element >> 24) & 0xFF); // A
+				bytes[rowByteOffset] = (byte) (element >> 16); // R
+				bytes[rowByteOffset + 1] = (byte) (element >> 8); // G
+				bytes[rowByteOffset + 2] = (byte) element; // B
+				bytes[rowByteOffset + 3] = (byte) (element >> 24); // A
 			}
 		}
 		return bytes;
@@ -158,8 +158,6 @@ class PngEncoderScanlineUtil {
 		}
 		return bytes;
 	}
-
-
 
 	static byte[] get3ByteBgr(WritableRaster imageRaster, int width, int height) {
 		final int channels = 3;
