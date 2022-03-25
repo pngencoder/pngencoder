@@ -25,7 +25,7 @@ class PngEncoderScanlineUtil {
 		// TODO: TYPE_INT_ARGB_PRE
 
 		if (type == PngEncoderBufferedImageType.TYPE_INT_BGR) {
-			return getIntBgr(raster, width, height);
+			return getIntRgb(raster, width, height);
 		}
 
 		if (type == PngEncoderBufferedImageType.TYPE_3BYTE_BGR) {
@@ -68,10 +68,10 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				final int element = elements[yOffset + x];
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
-				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
-				bytes[rowByteOffset + 3] = (byte) (element); // B
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
+				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
+				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
+				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
 			}
 		}
 		return bytes;
@@ -88,11 +88,11 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				final int element = elements[yOffset + x];
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
-				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
-				bytes[rowByteOffset + 3] = (byte) (element); // B
-				bytes[rowByteOffset + 4] = (byte) (element >> 24); // A
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
+				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
+				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
+				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
+				bytes[rowByteOffset + 3] = (byte) ((element >> 24) & 0xFF); // A
 			}
 		}
 		return bytes;
@@ -109,10 +109,10 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				final int element = elements[x];
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
-				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
-				bytes[rowByteOffset + 3] = (byte) (element); // B
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
+				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
+				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
+				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
 			}
 		}
 		return bytes;
@@ -129,31 +129,11 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				final int element = elements[x];
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = (byte) (element >> 16); // R
-				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
-				bytes[rowByteOffset + 3] = (byte) (element); // B
-				bytes[rowByteOffset + 4] = (byte) (element >> 24); // A
-			}
-		}
-		return bytes;
-	}
-
-	static byte[] getIntBgr(WritableRaster imageRaster, int width, int height) {
-		final int channels = 3;
-		final int rowByteSize = 1 + channels * width;
-		final byte[] bytes = new byte[rowByteSize * height];
-		final int[] elements = new int[width];
-		for (int y = 0; y < height; y++) {
-			imageRaster.getDataElements(0, y, width, 1, elements);
-			int yRowBytesOffset = y * rowByteSize;
-
-			for (int x = 0; x < width; x++) {
-				final int element = elements[x];
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = (byte) (element); // R
-				bytes[rowByteOffset + 2] = (byte) (element >> 8); // G
-				bytes[rowByteOffset + 3] = (byte) (element >> 16); // B
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
+				bytes[rowByteOffset] = (byte) ((element >> 16) & 0xFF); // R
+				bytes[rowByteOffset + 1] = (byte) ((element >> 8) & 0xFF); // G
+				bytes[rowByteOffset + 2] = (byte) ((element) & 0xFF); // B
+				bytes[rowByteOffset + 3] = (byte) ((element >> 24) & 0xFF); // A
 			}
 		}
 		return bytes;
@@ -170,10 +150,10 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				int xOffset = (x * 3);
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = elements[xOffset + 2]; // R
-				bytes[rowByteOffset + 2] = elements[xOffset + 1]; // G
-				bytes[rowByteOffset + 3] = elements[xOffset]; // B
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
+				bytes[rowByteOffset] = elements[xOffset]; // R
+				bytes[rowByteOffset + 1] = elements[xOffset + 1]; // G
+				bytes[rowByteOffset + 2] = elements[xOffset + 2]; // B
 			}
 		}
 		return bytes;
@@ -190,11 +170,11 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				int xOffset = x * 4;
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = elements[xOffset + 3]; // R
-				bytes[rowByteOffset + 2] = elements[xOffset + 2]; // G
-				bytes[rowByteOffset + 3] = elements[xOffset + 1]; // B
-				bytes[rowByteOffset + 4] = elements[xOffset]; // A
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
+				bytes[rowByteOffset] = elements[xOffset]; // R
+				bytes[rowByteOffset + 1] = elements[xOffset + 1]; // G
+				bytes[rowByteOffset + 2] = elements[xOffset + 2]; // B
+				bytes[rowByteOffset + 3] = elements[xOffset + 3]; // A
 			}
 		}
 		return bytes;
@@ -211,10 +191,10 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				byte grayColorValue = elements[x];
-				int rowByteOffset = yRowBytesOffset + x * channels;
-				bytes[rowByteOffset + 1] = grayColorValue; // R
-				bytes[rowByteOffset + 2] = grayColorValue; // G
-				bytes[rowByteOffset + 3] = grayColorValue; // B
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
+				bytes[rowByteOffset] = grayColorValue; // R
+				bytes[rowByteOffset + 1] = grayColorValue; // G
+				bytes[rowByteOffset + 2] = grayColorValue; // B
 			}
 		}
 		return bytes;
@@ -233,11 +213,11 @@ class PngEncoderScanlineUtil {
 
 			for (int x = 0; x < width; x++) {
 				byte grayColorValue = (byte) (elements[x] >> 8);
-				int rowByteOffset = yRowBytesOffset + x * channels;
+				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
 
-				bytes[rowByteOffset + 1] = grayColorValue; // R
-				bytes[rowByteOffset + 2] = grayColorValue; // G
-				bytes[rowByteOffset + 3] = grayColorValue; // B
+				bytes[rowByteOffset] = grayColorValue; // R
+				bytes[rowByteOffset + 1] = grayColorValue; // G
+				bytes[rowByteOffset + 2] = grayColorValue; // B
 			}
 		}
 		return bytes;
