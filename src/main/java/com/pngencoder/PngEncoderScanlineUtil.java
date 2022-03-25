@@ -148,13 +148,7 @@ class PngEncoderScanlineUtil {
 			imageRaster.getDataElements(0, y, width, 1, elements);
 			int yRowBytesOffset = y * rowByteSize;
 
-			for (int x = 0; x < width; x++) {
-				int xOffset = (x * 3);
-				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
-				bytes[rowByteOffset] = elements[xOffset]; // R
-				bytes[rowByteOffset + 1] = elements[xOffset + 1]; // G
-				bytes[rowByteOffset + 2] = elements[xOffset + 2]; // B
-			}
+			System.arraycopy(elements, 0, bytes, 1 + yRowBytesOffset, elements.length);
 		}
 		return bytes;
 	}
@@ -168,14 +162,7 @@ class PngEncoderScanlineUtil {
 			imageRaster.getDataElements(0, y, width, 1, elements);
 			int yRowBytesOffset = y * rowByteSize;
 
-			for (int x = 0; x < width; x++) {
-				int xOffset = x * 4;
-				int rowByteOffset = 1 + yRowBytesOffset + x * channels;
-				bytes[rowByteOffset] = elements[xOffset]; // R
-				bytes[rowByteOffset + 1] = elements[xOffset + 1]; // G
-				bytes[rowByteOffset + 2] = elements[xOffset + 2]; // B
-				bytes[rowByteOffset + 3] = elements[xOffset + 3]; // A
-			}
+			System.arraycopy(elements, 0, bytes, 1 + yRowBytesOffset, elements.length);
 		}
 		return bytes;
 	}
