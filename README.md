@@ -98,7 +98,7 @@ public class Examples {
 <dependency>
     <groupId>com.pngencoder</groupId>
     <artifactId>pngencoder</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
