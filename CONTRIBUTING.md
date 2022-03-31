@@ -18,6 +18,8 @@ Remember that the goal for this project is processing speed without the cost of 
 This is a set of guidelines that we have agreed upon so far. Over time we will add to and update these guidelines. However, we will never get a complete set of guidelines covering all cases. The focus for this document is to pin down some of the main points where there could be differences in opinions and this could lead to uncertainties during code reviews. As a base we follow the standard [Java coding conventions.](https://www.oracle.com/technetwork/java/codeconventions-150003.pdf)
 
 ## Code Style
+* Tabs
+  * Use 4 spaces instead of tabs. Why? Let's not get into why. Commits that automatically change all whitespace to tabs will not be accepted.
 * Braces
   * The starting `{` should **not** be on a new line
   * Always use `{...}` for blocks, even if they only contain a single line.
