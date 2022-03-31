@@ -135,6 +135,12 @@ Run yourself using [PngEncoderBenchmarkCompressionSpeedVsSize.java](src/test/jav
 
 In the table above we see that the "Speed / Size" column is close to 1 for all compression levels but 0. You likely want to avoid compression level 0 (no compression) if the file size matters at all. In comparison to using compression level 1 it's 35% faster, but the file size is a whopping 827%. That is likely not worth it.
 
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md)
+
+
 ## Noteworthy Caveats
 This library achieves the speedup mainly using multithreading. The performance tests above were run on a computer with 8 logical cores. So if you for example use a single core computer (perhaps in the cloud) the speedup will not be significant.
 
