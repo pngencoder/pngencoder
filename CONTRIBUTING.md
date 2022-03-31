@@ -7,7 +7,7 @@ Disclaimer: The maintainers of this repository are newbies when it comes to host
 
 If you want to contribute, feel free to make a fork and pull request towards the develop branch. Please prepare benchmark tests that showcase you proposed changes. You can use [PngEncoderBenchmarkPngEncoderVsImageIO](https://github.com/pngencoder/pngencoder/blob/develop/src/test/java/com/pngencoder/PngEncoderBenchmarkPngEncoderVsImageIO.java) but feel free to come up with something that better shows your progress!
 
-Remember that the goal for this project is processing speed without the cost of quality. We don't care as much about the file sizes or memory consumption withing reason, of course.
+Remember that the goal for this project is processing speed without the cost of quality. We don't care as much about the file sizes or memory consumption within reason, of course.
 
 
 
