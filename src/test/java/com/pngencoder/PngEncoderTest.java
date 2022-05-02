@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -153,6 +154,93 @@ public class PngEncoderTest {
         assertThat(actual, is(expected));
     }
 
+    @Test
+    public void testEncodeAndReadRedTransparencyPredictor() throws IOException {
+        int width = 0xFF;
+        int height = 1;
+        int[] image = new int[width];
+        for (int x = 0; x < width; x++) {
+            int pixel = (x << 24) + (x << 16);
+            image[x] = pixel;
+        }
+        BufferedImage bufferedImage = PngEncoderBufferedImageConverter.createFromIntArgb(image, width, height);
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withPredictorEncoding(true)
+                .toBytes();
+
+        int[] actual = readWithImageIOgetRGB(bytes);
+        int[] expected = image;
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testPredictorEncoding() throws IOException {
+        final BufferedImage bufferedImage = PngEncoderTestUtil
+                .createTestImage(PngEncoderBufferedImageType.TYPE_INT_ARGB);
+
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withMultiThreadedCompressionEnabled(false)
+                .withPredictorEncoding(true)
+                .toBytes();
+
+        BufferedImage backReadImage = readWithImageIO(bytes);
+        int[] actual = toIntArgb(backReadImage);
+        int[] expected = toIntArgb(bufferedImage);
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testPredictorEncodingWithImage() throws IOException {
+        final BufferedImage bufferedImage = ImageIO
+                .read(Objects.requireNonNull(PngEncoderTest.class.getResourceAsStream("/png-encoder-logo.png")));
+
+        byte[] bytes = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withPredictorEncoding(true)
+                .toBytes();
+
+        BufferedImage backReadImage = readWithImageIO(bytes);
+        int[] actual = toIntArgb(backReadImage);
+        int[] expected = toIntArgb(bufferedImage);
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testpredictorEncodingCompareSize() throws IOException {
+        final BufferedImage bufferedImage = ImageIO
+                .read(Objects.requireNonNull(PngEncoderTest.class.getResourceAsStream("/png-encoder-logo.png")));
+
+        byte[] bytesPred1 = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withPredictorEncoding(true)
+                .toBytes();
+        byte[] bytesPred9 = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(9)
+                .withPredictorEncoding(true)
+                .toBytes();
+        byte[] bytesBaseline1 = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .toBytes();
+        byte[] bytesBaseline9 = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(9)
+                .toBytes();
+
+        System.out.println("Baseline 1: " + bytesBaseline1.length);
+        System.out.println("Baseline 9: " + bytesBaseline9.length);
+        System.out.println("Preditor 1: " + bytesPred1.length);
+        System.out.println("Preditor 9: " + bytesPred9.length);
+        assertThat("Predictor must be smaller", bytesPred1.length < bytesBaseline1.length);
+        assertThat("Predictor must be smaller", bytesPred9.length < bytesBaseline9.length);
+    }
 
     @Test
     public void testEncodeWithSrgbAndReadMetadata() throws IOException {
@@ -201,13 +289,17 @@ public class PngEncoderTest {
     private static int[] readWithImageIOgetRGB(byte[] fileBytes) throws IOException {
         BufferedImage bufferedImage = readWithImageIO(fileBytes);
 
+        return toIntArgb(bufferedImage);
+    }
+
+    private static int[] toIntArgb(BufferedImage bufferedImage) {
         int width = bufferedImage.getWidth();
         int height = bufferedImage.getHeight();
         int[] argbImage = new int[width * height];
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                argbImage[y*width + x] = bufferedImage.getRGB(x, y);
+                argbImage[y * width + x] = bufferedImage.getRGB(x, y);
             }
         }
 
@@ -221,7 +313,8 @@ public class PngEncoderTest {
     }
 
     public static IIOMetadata getImageMetaDataWithImageIO(byte[] filesBytes) throws IOException {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(filesBytes); ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(filesBytes);
+                ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
             Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
             ImageReader reader = readers.next();
 
@@ -242,7 +335,7 @@ public class PngEncoderTest {
     }
 
     @ParameterizedTest()
-    @ValueSource(ints = { -2, 10 })
+    @ValueSource(ints = {-2, 10})
     public void invalidCompressionLevel(int compressionLevel) {
         assertThrows(IllegalArgumentException.class, () -> new PngEncoder().withCompressionLevel(compressionLevel));
     }

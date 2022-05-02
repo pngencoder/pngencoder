@@ -14,7 +14,7 @@ class PngEncoderTestUtil {
     private static final OutputStream NULL_OUTPUT_STREAM = new NullOutputStream();
 
     private static final Random RANDOM = new Random();
-    private static final int DEFAULT_SIDE = 128;
+    private static final int DEFAULT_SIDE = 256;
 
     static BufferedImage createTestImage(PngEncoderBufferedImageType type) {
         return createTestImage(type, DEFAULT_SIDE);

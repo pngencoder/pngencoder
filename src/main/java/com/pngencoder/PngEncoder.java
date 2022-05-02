@@ -13,11 +13,13 @@ import java.util.zip.Deflater;
 
 /**
  * Main class, containing the interface for PngEncoder.
+ * <p>
  * PngEncoder is a really fast encoder for PNG images in Java.
  */
 public class PngEncoder {
     /**
      * Compression level 9 is the default.
+     * <p>
      * It produces images with a size comparable to ImageIO.
      */
     public static int DEFAULT_COMPRESSION_LEVEL = Deflater.BEST_COMPRESSION;
@@ -28,29 +30,47 @@ public class PngEncoder {
     private final PngEncoderSrgbRenderingIntent srgbRenderingIntent;
     private final PngEncoderPhysicalPixelDimensions physicalPixelDimensions;
 
-    private PngEncoder(
-            BufferedImage bufferedImage,
-            int compressionLevel,
-            boolean multiThreadedCompressionEnabled,
+    private final PredictorEncoding predictorEncoding;
+
+    private enum PredictorEncoding {
+        DEFAULT {
+            @Override
+            boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled) {
+                return compressionLevel >= 6 && !multiThreadedCompressionEnabled;
+            }
+        },
+        EXPLICIT_ENABLED {
+            @Override
+            boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled) {
+                return true;
+            }
+        },
+        EXPLICIT_DISABLED {
+            @Override
+            boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled) {
+                return false;
+            }
+        };
+
+        abstract boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled);
+    }
+
+    private PngEncoder(BufferedImage bufferedImage, int compressionLevel, boolean multiThreadedCompressionEnabled,
             PngEncoderSrgbRenderingIntent srgbRenderingIntent,
-            PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
+            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, PredictorEncoding predictorEncoding) {
         this.bufferedImage = bufferedImage;
         this.compressionLevel = PngEncoderVerificationUtil.verifyCompressionLevel(compressionLevel);
         this.multiThreadedCompressionEnabled = multiThreadedCompressionEnabled;
         this.srgbRenderingIntent = srgbRenderingIntent;
         this.physicalPixelDimensions = physicalPixelDimensions;
+        this.predictorEncoding = predictorEncoding;
     }
 
     /**
      * Constructs an empty PngEncoder. Usually combined with methods named with*.
      */
     public PngEncoder() {
-        this(
-                null,
-                DEFAULT_COMPRESSION_LEVEL,
-                true,
-                null,
-                null);
+        this(null, DEFAULT_COMPRESSION_LEVEL, true, null, null, PredictorEncoding.DEFAULT);
     }
 
     /**
@@ -61,7 +81,8 @@ public class PngEncoder {
      * @return a new PngEncoder
      */
     public PngEncoder withBufferedImage(BufferedImage bufferedImage) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions, predictorEncoding);
     }
 
     /**
@@ -72,7 +93,8 @@ public class PngEncoder {
      * @return a new PngEncoder
      */
     public PngEncoder withCompressionLevel(int compressionLevel) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions, predictorEncoding);
     }
 
     /**
@@ -83,7 +105,8 @@ public class PngEncoder {
      * @return a new PngEncoder
      */
     public PngEncoder withMultiThreadedCompressionEnabled(boolean multiThreadedCompressionEnabled) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions, predictorEncoding);
     }
 
     /**
@@ -94,15 +117,37 @@ public class PngEncoder {
      * @return a new PngEncoder
      */
     public PngEncoder withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent srgbRenderingIntent) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions, predictorEncoding);
     }
 
     public PngEncoder withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
-        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions, predictorEncoding);
+    }
+
+    /**
+     * Returns a new PngEncoder which has the same configuration as this one except {@code enablePredictor}.
+     * The new PngEncoder will use the provided {@code enablePredictor}.
+     *
+     * @param enablePredictor true if predictor encoding should be used.
+     * @return a new PngEncoder
+     */
+    public PngEncoder withPredictorEncoding(boolean enablePredictor) {
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions,
+                enablePredictor ? PredictorEncoding.EXPLICIT_ENABLED : PredictorEncoding.EXPLICIT_DISABLED);
     }
 
     public BufferedImage getBufferedImage() {
         return bufferedImage;
+    }
+
+    /**
+     * @return true if the predictor encoding is enabled.
+     */
+    public boolean isPredictorEncodingEnabled() {
+        return predictorEncoding.isEnabled(compressionLevel, multiThreadedCompressionEnabled);
     }
 
     public int getCompressionLevel() {
@@ -119,13 +164,16 @@ public class PngEncoder {
 
     /**
      * Encodes the image to outputStream.
+     *
      * @param outputStream destination of the encoded data
      * @throws NullPointerException if the image has not been set.
      * @return number of bytes written
      */
     public int toStream(OutputStream outputStream) {
         try {
-            return PngEncoderLogic.encode(bufferedImage, outputStream, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions);
+            return PngEncoderLogic.encode(bufferedImage, outputStream, compressionLevel,
+                    multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions,
+                    isPredictorEncodingEnabled());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -133,6 +181,7 @@ public class PngEncoder {
 
     /**
      * Encodes the image and saves data into {@code filePath}.
+     *
      * @param filePath destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
@@ -148,6 +197,7 @@ public class PngEncoder {
 
     /**
      * Encodes the image and saves data into {@code file}.
+     *
      * @param file destination file where the encoded data will be written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
@@ -159,10 +209,11 @@ public class PngEncoder {
 
     /**
      * Encodes the image and saves data into {@code fileName}.
+     *
      * @param fileName destination file where the encoded data will be written
+     * @return number of bytes written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
-     * @return number of bytes written
      */
     public int toFile(String fileName) {
         return toFile(Paths.get(fileName));
@@ -170,6 +221,7 @@ public class PngEncoder {
 
     /**
      * Encodes the image and returns data as {@code byte[]}.
+     *
      * @throws NullPointerException if the image has not been set.
      * @return encoded data
      */
