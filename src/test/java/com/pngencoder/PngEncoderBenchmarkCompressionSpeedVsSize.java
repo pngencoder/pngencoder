@@ -43,6 +43,12 @@ public class PngEncoderBenchmarkCompressionSpeedVsSize {
             String message = String.format("compressionLevel: %d fileSize: %d", compressionLevel, fileSize);
             System.out.println(message);
         }
+
+        for (int compressionLevel = 0; compressionLevel <= 9; compressionLevel++) {
+            final int fileSize = PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(bufferedImage, compressionLevel);
+            String message = String.format("compressionLevel (withPredictor): %d fileSize: %d", compressionLevel, fileSize);
+            System.out.println(message);
+        }
     }
 
     @State(Scope.Benchmark)
