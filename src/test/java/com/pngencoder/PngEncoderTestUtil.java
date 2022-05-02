@@ -56,6 +56,14 @@ class PngEncoderTestUtil {
                 .toStream(NULL_OUTPUT_STREAM);
     }
 
+    static int encodeWithPngEncoderPredictorEncoding(BufferedImage bufferedImage, int compressionLevel) {
+        return new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(compressionLevel)
+                .withPredictorEncoding(true)
+                .toStream(NULL_OUTPUT_STREAM);
+    }
+
     static void encodeWithImageIO(BufferedImage bufferedImage) {
         try {
             ImageIO.write(bufferedImage, "png", NULL_OUTPUT_STREAM);
