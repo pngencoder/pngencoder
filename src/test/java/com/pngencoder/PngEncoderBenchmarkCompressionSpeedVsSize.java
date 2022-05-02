@@ -100,6 +100,56 @@ public class PngEncoderBenchmarkCompressionSpeedVsSize {
         PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 9);
     }
 
+    @Benchmark
+    public void compressionLevel0Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 0);
+    }
+
+    @Benchmark
+    public void compressionLevel1Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 1);
+    }
+
+    @Benchmark
+    public void compressionLevel2Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 2);
+    }
+
+    @Benchmark
+    public void compressionLevel3Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 3);
+    }
+
+    @Benchmark
+    public void compressionLevel4Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 4);
+    }
+
+    @Benchmark
+    public void compressionLevel5Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 5);
+    }
+
+    @Benchmark
+    public void compressionLevel6Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 6);
+    }
+
+    @Benchmark
+    public void compressionLevel7Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 7);
+    }
+
+    @Benchmark
+    public void compressionLevel8Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 8);
+    }
+
+    @Benchmark
+    public void compressionLevel9Predictor(BenchmarkState state) {
+        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 9);
+    }
+
     private static BufferedImage createTestImage() {
         return PngEncoderTestUtil.readTestImageResource("png-encoder-logo.png");
     }
