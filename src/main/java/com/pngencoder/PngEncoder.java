@@ -30,47 +30,24 @@ public class PngEncoder {
     private final PngEncoderSrgbRenderingIntent srgbRenderingIntent;
     private final PngEncoderPhysicalPixelDimensions physicalPixelDimensions;
 
-    private final PredictorEncoding predictorEncoding;
-
-    private enum PredictorEncoding {
-        DEFAULT {
-            @Override
-            boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled) {
-                return compressionLevel >= 6 && !multiThreadedCompressionEnabled;
-            }
-        },
-        EXPLICIT_ENABLED {
-            @Override
-            boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled) {
-                return true;
-            }
-        },
-        EXPLICIT_DISABLED {
-            @Override
-            boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled) {
-                return false;
-            }
-        };
-
-        abstract boolean isEnabled(int compressionLevel, boolean multiThreadedCompressionEnabled);
-    }
+    private final boolean usePredictorEncoding;
 
     private PngEncoder(BufferedImage bufferedImage, int compressionLevel, boolean multiThreadedCompressionEnabled,
             PngEncoderSrgbRenderingIntent srgbRenderingIntent,
-            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, PredictorEncoding predictorEncoding) {
+            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, boolean usePredictorEncoding) {
         this.bufferedImage = bufferedImage;
         this.compressionLevel = PngEncoderVerificationUtil.verifyCompressionLevel(compressionLevel);
         this.multiThreadedCompressionEnabled = multiThreadedCompressionEnabled;
         this.srgbRenderingIntent = srgbRenderingIntent;
         this.physicalPixelDimensions = physicalPixelDimensions;
-        this.predictorEncoding = predictorEncoding;
+        this.usePredictorEncoding = usePredictorEncoding;
     }
 
     /**
      * Constructs an empty PngEncoder. Usually combined with methods named with*.
      */
     public PngEncoder() {
-        this(null, DEFAULT_COMPRESSION_LEVEL, true, null, null, PredictorEncoding.DEFAULT);
+        this(null, DEFAULT_COMPRESSION_LEVEL, true, null, null, false);
     }
 
     /**
@@ -82,7 +59,7 @@ public class PngEncoder {
      */
     public PngEncoder withBufferedImage(BufferedImage bufferedImage) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, predictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding);
     }
 
     /**
@@ -94,7 +71,7 @@ public class PngEncoder {
      */
     public PngEncoder withCompressionLevel(int compressionLevel) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, predictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding);
     }
 
     /**
@@ -106,7 +83,7 @@ public class PngEncoder {
      */
     public PngEncoder withMultiThreadedCompressionEnabled(boolean multiThreadedCompressionEnabled) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, predictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding);
     }
 
     /**
@@ -118,25 +95,25 @@ public class PngEncoder {
      */
     public PngEncoder withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent srgbRenderingIntent) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, predictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding);
     }
 
     public PngEncoder withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, predictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding);
     }
 
     /**
-     * Returns a new PngEncoder which has the same configuration as this one except {@code enablePredictor}.
-     * The new PngEncoder will use the provided {@code enablePredictor}.
+     * Returns a new PngEncoder which has the same configuration as this one except {@code usePredictorEncoding}.
+     * The new PngEncoder will use the provided {@code usePredictorEncoding}.
      *
-     * @param enablePredictor true if predictor encoding should be used.
+     * @param usePredictorEncoding true if predictor encoding should be used.
      * @return a new PngEncoder
      */
-    public PngEncoder withPredictorEncoding(boolean enablePredictor) {
+    public PngEncoder withPredictorEncoding(boolean usePredictorEncoding) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
                 physicalPixelDimensions,
-                enablePredictor ? PredictorEncoding.EXPLICIT_ENABLED : PredictorEncoding.EXPLICIT_DISABLED);
+                usePredictorEncoding);
     }
 
     public BufferedImage getBufferedImage() {
@@ -147,7 +124,7 @@ public class PngEncoder {
      * @return true if the predictor encoding is enabled.
      */
     public boolean isPredictorEncodingEnabled() {
-        return predictorEncoding.isEnabled(compressionLevel, multiThreadedCompressionEnabled);
+        return usePredictorEncoding;
     }
 
     public int getCompressionLevel() {
