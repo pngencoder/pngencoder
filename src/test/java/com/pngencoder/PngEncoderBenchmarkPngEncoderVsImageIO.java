@@ -30,23 +30,32 @@ import java.util.concurrent.TimeUnit;
  * 0.159 / 0.029 = 5.5 times faster
  */
 public class PngEncoderBenchmarkPngEncoderVsImageIO {
-    private static final Options OPTIONS = new OptionsBuilder()
-            .include(PngEncoderBenchmarkPngEncoderVsImageIO.class.getSimpleName() + ".*")
-            .shouldFailOnError(true)
-            .mode(Mode.Throughput)
-            .timeUnit(TimeUnit.SECONDS)
-            .threads(1)
-            .forks(1)
-            .warmupIterations(1)
-            .measurementIterations(1)
-            .warmupTime(TimeValue.seconds(2))
-            .measurementTime(TimeValue.seconds(5))
-            .build();
+
+    private static Options options(int threads) {
+        return new OptionsBuilder()
+                .include(PngEncoderBenchmarkPngEncoderVsImageIO.class.getSimpleName() + ".*")
+                .shouldFailOnError(true)
+                .mode(Mode.Throughput)
+                .timeUnit(TimeUnit.SECONDS)
+                .threads(threads)
+                .forks(1)
+                .warmupIterations(1)
+                .measurementIterations(1)
+                .warmupTime(TimeValue.seconds(2))
+                .measurementTime(TimeValue.seconds(5))
+                .build();
+    }
 
     @Disabled("run manually")
     @Test
-    public void runBenchmark() throws Exception {
-        new Runner(OPTIONS).run();
+    public void runBenchmarkOneThread() throws Exception {
+        new Runner(options(1)).run();
+    }
+
+    @Disabled("run manually")
+    @Test
+    public void runBenchmarkEightThreads() throws Exception {
+        new Runner(options(8)).run();
     }
 
     @State(Scope.Benchmark)
