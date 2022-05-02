@@ -7,7 +7,7 @@
     <version>0.13.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>${project.groupId}:${project.artifactId}</name>
+    <name>com.pngencoder:pngencoder</name>
     <description>A really fast encoder for PNG images.</description>
     <url>https://github.com/pngencoder/pngencoder</url>
     <inceptionYear>2020</inceptionYear>
