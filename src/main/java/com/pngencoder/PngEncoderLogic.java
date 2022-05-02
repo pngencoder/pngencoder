@@ -57,7 +57,7 @@ class PngEncoderLogic {
 
     static int encode(BufferedImage bufferedImage, OutputStream outputStream, int compressionLevel,
             boolean multiThreadedCompressionEnabled, PngEncoderSrgbRenderingIntent srgbRenderingIntent,
-            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, boolean usePreditor) throws IOException {
+            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, boolean usePredictor) throws IOException {
         Objects.requireNonNull(bufferedImage, "bufferedImage");
         Objects.requireNonNull(outputStream, "outputStream");
 
@@ -91,7 +91,7 @@ class PngEncoderLogic {
                 countingOutputStream);
         int estimatedBytes = metaInfo.rowByteSize * bufferedImage.getHeight();
         final int segmentMaxLengthOriginal = PngEncoderDeflaterOutputStream.getSegmentMaxLengthOriginal(estimatedBytes);
-        if (usePreditor) {
+        if (usePredictor) {
             if (estimatedBytes <= segmentMaxLengthOriginal || !multiThreadedCompressionEnabled) {
                 Deflater deflater = new Deflater(compressionLevel);
                 DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(idatChunksOutputStream, deflater);
