@@ -120,6 +120,7 @@ public class PngEncoderIndexed {
 			result.transparencyTable = table.makeTransparencyTable();
 		}
         metaInfo.colorSpaceType = ColorSpaceType.Indexed;
+        metaInfo.rowByteSize = indexedRow.length;
         return result;
     }
 
