@@ -18,6 +18,7 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageInputStream;
 
+import static com.pngencoder.SubimageEncodingTest.validateImage;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -211,7 +212,24 @@ public class PngEncoderTest {
     }
 
     @Test
-    public void testpredictorEncodingCompareSize() throws IOException {
+    public void testIndexedEncodingWithImage() throws IOException {
+        final BufferedImage bufferedImage = ImageIO
+                .read(Objects.requireNonNull(PngEncoderTest.class.getResourceAsStream("/png-encoder-logo.png")));
+
+        PngEncoder pngEncoder = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withTryIndexedEncoding(true);
+
+        /*
+         * We can not compare the raw image rgba pixels, as the indexed encoder "normalizes" pixels with an alpha value of
+         * zero to 0
+         */
+        validateImage(PngEncoderBufferedImageType.TYPE_CUSTOM, bufferedImage, pngEncoder);
+    }
+
+    @Test
+    public void testPredictorEncodingCompareSize() throws IOException {
         final BufferedImage bufferedImage = ImageIO
                 .read(Objects.requireNonNull(PngEncoderTest.class.getResourceAsStream("/png-encoder-logo.png")));
 
@@ -225,6 +243,18 @@ public class PngEncoderTest {
                 .withCompressionLevel(9)
                 .withPredictorEncoding(true)
                 .toBytes();
+        byte[] bytesIndexed1 = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withPredictorEncoding(true)
+                .withTryIndexedEncoding(true)
+                .toBytes();
+        byte[] bytesIndexed9 = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(9)
+                .withPredictorEncoding(true)
+                .withTryIndexedEncoding(true)
+                .toBytes();
         byte[] bytesBaseline1 = new PngEncoder()
                 .withBufferedImage(bufferedImage)
                 .withCompressionLevel(1)
@@ -236,6 +266,8 @@ public class PngEncoderTest {
 
         System.out.println("Baseline 1: " + bytesBaseline1.length);
         System.out.println("Baseline 9: " + bytesBaseline9.length);
+        System.out.println("Indexed 1: " + bytesIndexed1.length);
+        System.out.println("Indexed 9: " + bytesIndexed9.length);
         System.out.println("Preditor 1: " + bytesPred1.length);
         System.out.println("Preditor 9: " + bytesPred9.length);
         assertThat("Predictor must be smaller", bytesPred1.length < bytesBaseline1.length);
@@ -282,8 +314,8 @@ public class PngEncoderTest {
 
         // Standard metadata contains the width/height of a pixel in millimeters
         float mmPerInch = 25.4f;
-        assertThat(Math.round(mmPerInch/horizontalPixelSize), is(dotsPerInch));
-        assertThat(Math.round(mmPerInch/verticalPixelSize), is(dotsPerInch));
+        assertThat(Math.round(mmPerInch / horizontalPixelSize), is(dotsPerInch));
+        assertThat(Math.round(mmPerInch / verticalPixelSize), is(dotsPerInch));
     }
 
     private static int[] readWithImageIOgetRGB(byte[] fileBytes) throws IOException {
@@ -297,9 +329,10 @@ public class PngEncoderTest {
         int height = bufferedImage.getHeight();
         int[] argbImage = new int[width * height];
 
+        int writePtr = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                argbImage[y * width + x] = bufferedImage.getRGB(x, y);
+                argbImage[writePtr++] = bufferedImage.getRGB(x, y);
             }
         }
 

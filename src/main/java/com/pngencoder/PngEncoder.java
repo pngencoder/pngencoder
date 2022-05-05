@@ -31,23 +31,25 @@ public class PngEncoder {
     private final PngEncoderPhysicalPixelDimensions physicalPixelDimensions;
 
     private final boolean usePredictorEncoding;
+    private final boolean tryIndexedEncoding;
 
     private PngEncoder(BufferedImage bufferedImage, int compressionLevel, boolean multiThreadedCompressionEnabled,
             PngEncoderSrgbRenderingIntent srgbRenderingIntent,
-            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, boolean usePredictorEncoding) {
+            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, boolean usePredictorEncoding, boolean tryIndexedEncoding) {
         this.bufferedImage = bufferedImage;
         this.compressionLevel = PngEncoderVerificationUtil.verifyCompressionLevel(compressionLevel);
         this.multiThreadedCompressionEnabled = multiThreadedCompressionEnabled;
         this.srgbRenderingIntent = srgbRenderingIntent;
         this.physicalPixelDimensions = physicalPixelDimensions;
         this.usePredictorEncoding = usePredictorEncoding;
+        this.tryIndexedEncoding = tryIndexedEncoding;
     }
 
     /**
      * Constructs an empty PngEncoder. Usually combined with methods named with*.
      */
     public PngEncoder() {
-        this(null, DEFAULT_COMPRESSION_LEVEL, true, null, null, false);
+        this(null, DEFAULT_COMPRESSION_LEVEL, true, null, null, false, false);
     }
 
     /**
@@ -59,7 +61,7 @@ public class PngEncoder {
      */
     public PngEncoder withBufferedImage(BufferedImage bufferedImage) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, usePredictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
     }
 
     /**
@@ -71,7 +73,19 @@ public class PngEncoder {
      */
     public PngEncoder withCompressionLevel(int compressionLevel) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, usePredictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
+    }
+
+    /**
+     * Try to encode the image with indexed encoding. This only works if the image is RGB and uses not more then
+     * 256 colors.
+     *
+     * @param tryIndexedEncoding true if indexed encoding should be tried.
+     * @return a new PngEncoder
+     */
+    public PngEncoder withTryIndexedEncoding(boolean tryIndexedEncoding) {
+        return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
     }
 
     /**
@@ -83,7 +97,7 @@ public class PngEncoder {
      */
     public PngEncoder withMultiThreadedCompressionEnabled(boolean multiThreadedCompressionEnabled) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, usePredictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
     }
 
     /**
@@ -95,12 +109,12 @@ public class PngEncoder {
      */
     public PngEncoder withSrgbRenderingIntent(PngEncoderSrgbRenderingIntent srgbRenderingIntent) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, usePredictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
     }
 
     public PngEncoder withPhysicalPixelDimensions(PngEncoderPhysicalPixelDimensions physicalPixelDimensions) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
-                physicalPixelDimensions, usePredictorEncoding);
+                physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
     }
 
     /**
@@ -113,7 +127,7 @@ public class PngEncoder {
     public PngEncoder withPredictorEncoding(boolean usePredictorEncoding) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
                 physicalPixelDimensions,
-                usePredictorEncoding);
+                usePredictorEncoding, tryIndexedEncoding);
     }
 
     public BufferedImage getBufferedImage() {
@@ -143,8 +157,8 @@ public class PngEncoder {
      * Encodes the image to outputStream.
      *
      * @param outputStream destination of the encoded data
-     * @throws NullPointerException if the image has not been set.
      * @return number of bytes written
+     * @throws NullPointerException if the image has not been set.
      */
     public int toStream(OutputStream outputStream) {
         BufferedImage actualBufferedImage = bufferedImage;
@@ -158,7 +172,7 @@ public class PngEncoder {
         try {
             return PngEncoderLogic.encode(actualBufferedImage, outputStream, compressionLevel,
                     multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions,
-                    isPredictorEncodingEnabled());
+                    isPredictorEncodingEnabled(), tryIndexedEncoding);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -168,9 +182,9 @@ public class PngEncoder {
      * Encodes the image and saves data into {@code filePath}.
      *
      * @param filePath destination file where the encoded data will be written
+     * @return number of bytes written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
-     * @return number of bytes written
      */
     public int toFile(Path filePath) {
         try (OutputStream outputStream = Files.newOutputStream(filePath)) {
@@ -184,9 +198,9 @@ public class PngEncoder {
      * Encodes the image and saves data into {@code file}.
      *
      * @param file destination file where the encoded data will be written
+     * @return number of bytes written
      * @throws NullPointerException if the image has not been set.
      * @throws UncheckedIOException instead of IOException
-     * @return number of bytes written
      */
     public int toFile(File file) {
         return toFile(file.toPath());
@@ -207,8 +221,8 @@ public class PngEncoder {
     /**
      * Encodes the image and returns data as {@code byte[]}.
      *
-     * @throws NullPointerException if the image has not been set.
      * @return encoded data
+     * @throws NullPointerException if the image has not been set.
      */
     public byte[] toBytes() {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(64 * 1024);

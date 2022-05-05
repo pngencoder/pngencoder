@@ -41,11 +41,14 @@ public class SubimageEncodingTest {
         PngEncoder predictorCompressor = plainCompressor.withPredictorEncoding(true);
         PngEncoder multithreadCompressor = plainCompressor.withMultiThreadedCompressionEnabled(true);
         PngEncoder multithreadPredictorCompressor = plainCompressor.withMultiThreadedCompressionEnabled(true).withPredictorEncoding(true);
+        PngEncoder indexedCompressor = new PngEncoder().withPredictorEncoding(false).withCompressionLevel(0).withMultiThreadedCompressionEnabled(false)
+                .withTryIndexedEncoding(true);
         for (PngEncoder encoder : new PngEncoder[]{
                 plainCompressor,
                 predictorCompressor,
                 multithreadCompressor,
-                multithreadPredictorCompressor
+                multithreadPredictorCompressor,
+                indexedCompressor
         }) {
             validateImage(type, bufferedImage, encoder);
             validateImage(type, bufferedImage.getSubimage(10, 10, 50, 50), encoder);
@@ -100,7 +103,7 @@ public class SubimageEncodingTest {
         testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
     }
 
-    private void validateImage(PngEncoderBufferedImageType type, BufferedImage image, PngEncoder encoder) throws IOException {
+    static void validateImage(PngEncoderBufferedImageType type, BufferedImage image, PngEncoder encoder) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(image, "PNG", outputStream);
         byte[] imgData2 = encoder.withBufferedImage(image).toBytes();
@@ -113,10 +116,17 @@ public class SubimageEncodingTest {
                 long rgbSource = image.getRGB(x, y) & 0xFFFFFFFFL;
                 long rgb1 = img1.getRGB(x, y) & 0xFFFFFFFFL;
                 long rgb2 = img2.getRGB(x, y) & 0xFFFFFFFFL;
-                assertEquals(rgbSource, rgb1, "Source compare failure with type " + type + " "
-                        + Long.toString(rgbSource, 16) + " != " + Long.toString(rgb1, 16));
-                assertEquals(rgb1, rgb2, "Compare failure with type " + type + " " + Long.toString(rgb1, 16) + " != "
-                        + Long.toString(rgb2, 16));
+
+                long a1 = (rgb1 & 0xFF000000) >> 24;
+                long a2 = (rgb1 & 0xFF000000) >> 24;
+
+                // We only compare the image rgb values if the alpha is not 0
+                if (a1 != 0 && a2 != 0) {
+                    assertEquals(rgbSource, rgb1, "Source compare failure with type " + type + " "
+                            + Long.toString(rgbSource, 16) + " != " + Long.toString(rgb1, 16));
+                    assertEquals(rgb1, rgb2, "Compare failure with type " + type + " " + Long.toString(rgb1, 16) + " != "
+                            + Long.toString(rgb2, 16) + " at (" + x + "," + y + ")");
+                }
             }
         }
     }
