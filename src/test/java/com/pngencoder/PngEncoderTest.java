@@ -378,11 +378,11 @@ public class PngEncoderTest {
         // Document the fact that, at the moment, attempting to encode without providing an
         // image throws NullPointException.
         PngEncoder emptyEncoder = new PngEncoder();
-        assertThrows(NullPointerException.class, () -> emptyEncoder.toBytes());
+        assertThrows(NullPointerException.class, emptyEncoder::toBytes);
 
         PngEncoder encoderWithoutImage = new PngEncoder()
                 .withCompressionLevel(9)
                 .withMultiThreadedCompressionEnabled(true);
-        assertThrows(NullPointerException.class, () -> encoderWithoutImage.toBytes());
+        assertThrows(NullPointerException.class, encoderWithoutImage::toBytes);
     }
 }
