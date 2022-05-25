@@ -2,11 +2,19 @@ package com.pngencoder;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
+import java.util.concurrent.TimeUnit;
 
 public class PngEncoderBenchmarkAssorted {
     @Disabled("run manually")
@@ -29,36 +37,70 @@ public class PngEncoderBenchmarkAssorted {
         }
     }
 
+    private static final Options OPTIONS = new OptionsBuilder()
+            .include(PngEncoderBenchmarkAssorted.class.getSimpleName() + ".*")
+            .shouldFailOnError(true)
+            .mode(Mode.Throughput)
+            .timeUnit(TimeUnit.SECONDS)
+            .threads(1)
+            .forks(1)
+            .warmupIterations(1)
+            .measurementIterations(1)
+            .warmupTime(TimeValue.seconds(2))
+            .measurementTime(TimeValue.seconds(10))
+            .build();
+
     @Disabled("run manually")
     @Test
-    public void runBenchmarkCustom() throws IOException {
-        Timing.message("started");
+    public void runBenchmarkCustom() throws Exception {
+        new Runner(OPTIONS).run();
+    }
 
-        //final BufferedImage original = readTestImageResource("png-encoder-logo.png");
-        final BufferedImage original = PngEncoderBufferedImageConverter.ensureType(PngEncoderTestUtil.readTestImageResource("looklet-look-scale6.png"), PngEncoderBufferedImageType.TYPE_INT_RGB);
-        Timing.message("loaded");
+    @State(Scope.Benchmark)
+    public static class BenchmarkStateRandom1024x1024 {
+        final BufferedImage bufferedImage = PngEncoderTestUtil.createTestImage(PngEncoderBufferedImageType.TYPE_INT_ARGB, 1024);
+    }
 
+    @State(Scope.Benchmark)
+    public static class BenchmarkStateLooklet4900x6000 {
+        final BufferedImage bufferedImage = PngEncoderBufferedImageConverter.ensureType(PngEncoderTestUtil.readTestImageResource("looklet-look-scale6.png"), PngEncoderBufferedImageType.TYPE_INT_ARGB);
+    }
+
+    @State(Scope.Benchmark)
+    public static class BenchmarkStateLogo2121x350 {
+        final BufferedImage bufferedImage = PngEncoderTestUtil.readTestImageResource("png-encoder-logo.png");
+    }
+
+    @Benchmark
+    public void benchmarkCustom1024(BenchmarkStateRandom1024x1024 state) throws IOException {
+        doCustomBenchmarkOperations(state.bufferedImage);
+    }
+
+    @Benchmark
+    public void benchmarkCustomLooklet(BenchmarkStateLooklet4900x6000 state) throws IOException {
+        doCustomBenchmarkOperations(state.bufferedImage);
+    }
+
+    @Benchmark
+    public void benchmarkCustomLogo(BenchmarkStateLogo2121x350 state) throws IOException {
+        doCustomBenchmarkOperations(state.bufferedImage);
+    }
+
+    private void doCustomBenchmarkOperations(BufferedImage original) throws IOException {
         final File outImageIO = File.createTempFile("out-imageio", ".png");
-        //final File outPngEncoder = File.createTempFile("out-pngencoder", ".png");
-        final File outPngEncoder = new File("/Users/olof/Desktop/out.png");
-
-        ImageIO.write(original, "png", outImageIO);
-        Timing.message("ImageIO Warmup");
-
-        ImageIO.write(original, "png", outImageIO);
-        Timing.message("ImageIO Result");
+        final File outPngEncoder = new File("target/test/assorted_out.png");
+//        System.out.println(outPngEncoder.getAbsolutePath());
+        outPngEncoder.getParentFile().mkdir();
 
         PngEncoder pngEncoder = new PngEncoder()
-                //.withMultiThreadedCompressionEnabled(false)
-                .withCompressionLevel(9)
+                .withMultiThreadedCompressionEnabled(true)
+                //.withPredictorEncoding(true)
+                .withCompressionLevel(4)
                 .withBufferedImage(original);
-        System.out.println(outPngEncoder);
-
+//        System.out.println("saving " + outPngEncoder + "...");
         pngEncoder.toFile(outPngEncoder);
-        Timing.message("PngEncoder Warmup");
-
-        pngEncoder.toFile(outPngEncoder);
-        Timing.message("PngEncoder Result");
+        /*
+        System.out.println("saved");
 
         final long imageIOSize = outImageIO.length();
         final long pngEncoderSize = outPngEncoder.length();
@@ -74,5 +116,6 @@ public class PngEncoderBenchmarkAssorted {
         if (imageIOSize != 0 && pngEncoderSize != 0) {
             System.out.println("pngEncoderSize / imageIOSize: " + (double) pngEncoderSize / (double) imageIOSize);
         }
+        */
     }
 }

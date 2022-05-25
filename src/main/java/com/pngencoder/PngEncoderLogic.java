@@ -1,7 +1,10 @@
 package com.pngencoder;
 
-import java.awt.Transparency;
+import com.pngencoder.PngEncoderScanlineUtil.AbstractPNGLineConsumer;
+
+import java.awt.color.ICC_Profile;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -23,8 +26,9 @@ class PngEncoderLogic {
     // This is the "file ending"
     static final byte[] FILE_ENDING = {0, 0, 0, 0, 73, 69, 78, 68, -82, 66, 96, -126};
 
-    static final byte IHDR_BIT_DEPTH = 8;
+    static final byte IHDR_COLOR_TYPE_GREY = 0;
     static final byte IHDR_COLOR_TYPE_RGB = 2;
+    static final byte IHDR_COLOR_TYPE_GREY_ALPHA = 4;
     static final byte IHDR_COLOR_TYPE_RGBA = 6;
     static final byte IHDR_COMPRESSION_METHOD = 0;
     static final byte IHDR_FILTER_METHOD = 0;
@@ -51,23 +55,25 @@ class PngEncoderLogic {
     private PngEncoderLogic() {
     }
 
-    static int encode(BufferedImage bufferedImage, OutputStream outputStream, int compressionLevel, boolean multiThreadedCompressionEnabled, PngEncoderSrgbRenderingIntent srgbRenderingIntent, PngEncoderPhysicalPixelDimensions physicalPixelDimensions) throws IOException {
+    static int encode(BufferedImage bufferedImage, OutputStream outputStream, int compressionLevel,
+            boolean multiThreadedCompressionEnabled, PngEncoderSrgbRenderingIntent srgbRenderingIntent,
+            PngEncoderPhysicalPixelDimensions physicalPixelDimensions, boolean usePredictor) throws IOException {
         Objects.requireNonNull(bufferedImage, "bufferedImage");
         Objects.requireNonNull(outputStream, "outputStream");
 
-        final boolean alpha = bufferedImage.getTransparency() != Transparency.OPAQUE;
+        PngEncoderScanlineUtil.EncodingMetaInfo metaInfo = PngEncoderScanlineUtil.getEncodingMetaInfo(bufferedImage);
         final int width = bufferedImage.getWidth();
         final int height = bufferedImage.getHeight();
         final PngEncoderCountingOutputStream countingOutputStream = new PngEncoderCountingOutputStream(outputStream);
 
         countingOutputStream.write(FILE_BEGINNING);
 
-        final byte[] ihdr = getIhdrHeader(width, height, alpha);
+        final byte[] ihdr = getIhdrHeader(width, height, metaInfo);
         final byte[] ihdrChunk = asChunk("IHDR", ihdr);
         countingOutputStream.write(ihdrChunk);
 
-        if (srgbRenderingIntent != null) {
-            outputStream.write(asChunk("sRGB", new byte[]{ srgbRenderingIntent.getValue() }));
+        if (srgbRenderingIntent != null && metaInfo.colorProfile == null) {
+            outputStream.write(asChunk("sRGB", new byte[]{srgbRenderingIntent.getValue()}));
             outputStream.write(asChunk("gAMA", GAMA_SRGB_VALUE));
             outputStream.write(asChunk("cHRM", CHRM_SRGB_VALUE));
         }
@@ -76,23 +82,52 @@ class PngEncoderLogic {
             outputStream.write(asChunk("pHYs", getPhysicalPixelDimensions(physicalPixelDimensions)));
         }
 
-        PngEncoderIdatChunksOutputStream idatChunksOutputStream = new PngEncoderIdatChunksOutputStream(countingOutputStream);
-        final byte[] scanlineBytes = PngEncoderScanlineUtil.get(bufferedImage);
-
-        final int segmentMaxLengthOriginal = PngEncoderDeflaterOutputStream.getSegmentMaxLengthOriginal(scanlineBytes.length);
-
-        if (scanlineBytes.length <= segmentMaxLengthOriginal || !multiThreadedCompressionEnabled) {
-            Deflater deflater = new Deflater(compressionLevel);
-            DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(idatChunksOutputStream, deflater);
-            deflaterOutputStream.write(scanlineBytes);
-            deflaterOutputStream.finish();
-            deflaterOutputStream.flush();
-        } else {
-            PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(idatChunksOutputStream, compressionLevel, segmentMaxLengthOriginal);
-            deflaterOutputStream.write(scanlineBytes);
-            deflaterOutputStream.finish();
+        if (metaInfo.colorProfile != null) {
+            byte[] iCCP = getICCP(metaInfo.colorProfile);
+            outputStream.write(asChunk("iCCP", iCCP));
         }
 
+        PngEncoderIdatChunksOutputStream idatChunksOutputStream = new PngEncoderIdatChunksOutputStream(
+                countingOutputStream);
+        int estimatedBytes = metaInfo.rowByteSize * bufferedImage.getHeight();
+        final int segmentMaxLengthOriginal = PngEncoderDeflaterOutputStream.getSegmentMaxLengthOriginal(estimatedBytes);
+        if (usePredictor) {
+            if (estimatedBytes <= segmentMaxLengthOriginal || !multiThreadedCompressionEnabled) {
+                Deflater deflater = new Deflater(compressionLevel);
+                DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(idatChunksOutputStream, deflater);
+                PngEncoderPredictor.encodeImageSingleThreaded(bufferedImage,  metaInfo, deflaterOutputStream);
+                deflaterOutputStream.finish();
+                deflaterOutputStream.flush();
+            } else {
+                PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(
+                        idatChunksOutputStream, compressionLevel, segmentMaxLengthOriginal);
+                PngEncoderPredictor.encodeImageMultiThreaded(bufferedImage, metaInfo, deflaterOutputStream);
+                deflaterOutputStream.finish();
+            }
+        } else {
+            if (estimatedBytes <= segmentMaxLengthOriginal || !multiThreadedCompressionEnabled) {
+                Deflater deflater = new Deflater(compressionLevel);
+                DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(idatChunksOutputStream, deflater);
+                PngEncoderScanlineUtil.stream(bufferedImage, 0, bufferedImage.getHeight(), new AbstractPNGLineConsumer() {
+                    @Override
+                    void consume(byte[] currRow, byte[] prevRow) throws IOException {
+                        deflaterOutputStream.write(currRow);
+                    }
+                });
+                deflaterOutputStream.finish();
+                deflaterOutputStream.flush();
+            } else {
+                PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(
+                        idatChunksOutputStream, compressionLevel, segmentMaxLengthOriginal);
+                PngEncoderScanlineUtil.stream(bufferedImage, 0, bufferedImage.getHeight(), new AbstractPNGLineConsumer() {
+                    @Override
+                    void consume(byte[] currRow, byte[] prevRow) throws IOException {
+                        deflaterOutputStream.write(currRow);
+                    }
+                });
+                deflaterOutputStream.finish();
+            }
+        }
         countingOutputStream.write(FILE_ENDING);
 
         countingOutputStream.flush();
@@ -100,12 +135,75 @@ class PngEncoderLogic {
         return countingOutputStream.getCount();
     }
 
-    static byte[] getIhdrHeader(int width, int height, boolean alpha) {
+    private static byte[] getICCP(ICC_Profile colorProfile) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        // Write the profile name
+        String name = getProfileName(colorProfile);
+        byte[] nameBytes = name.getBytes(StandardCharsets.ISO_8859_1);
+        int nameByteWriteLen = Math.min(nameBytes.length, 79);
+        out.write(nameBytes, 0, nameByteWriteLen);
+        out.write(0);
+
+        // ZLib Compression
+        out.write(IHDR_COMPRESSION_METHOD);
+
+        // ICC Profile Data
+        try (DeflaterOutputStream compressStream = new DeflaterOutputStream(out)) {
+            compressStream.write(colorProfile.getData());
+        }
+        return out.toByteArray();
+    }
+
+    private static String getProfileName(ICC_Profile profile) {
+        byte[] data = profile.getData(ICC_Profile.icSigProfileDescriptionTag);
+        if (data == null) {
+            return "<noname>";
+        }
+        int startIdx = 12;
+        int endIdx = startIdx;
+        while (endIdx < data.length) {
+            int c = data[endIdx];
+            if (c == 0) {
+                break;
+            }
+            endIdx++;
+        }
+        if (endIdx != startIdx) {
+            return new String(data, startIdx, endIdx - startIdx, StandardCharsets.US_ASCII);
+        }
+
+        /*
+         * Unicode Format ... this is special to parse...
+         */
+        endIdx = startIdx = 29;
+        while (endIdx + 1 < data.length) {
+            int c = (data[endIdx] & 0xff) + (data[endIdx] & 0xFF);
+            if (c == 0) {
+                break;
+            }
+            endIdx += 2;
+        }
+        if (endIdx != startIdx) {
+            return new String(data, startIdx, endIdx - startIdx, StandardCharsets.UTF_16LE);
+        }
+        return "<unnamed>";
+    }
+
+
+    static byte[] getIhdrHeader(int width, int height, PngEncoderScanlineUtil.EncodingMetaInfo metaInfo) {
         ByteBuffer buffer = ByteBuffer.allocate(13);
         buffer.putInt(width);
         buffer.putInt(height);
-        buffer.put(IHDR_BIT_DEPTH);
-        buffer.put(alpha ? IHDR_COLOR_TYPE_RGBA : IHDR_COLOR_TYPE_RGB);
+        buffer.put((byte) metaInfo.bitsPerChannel);
+        switch (metaInfo.colorSpaceType) {
+            case Rgb:
+                buffer.put(metaInfo.hasAlpha ? IHDR_COLOR_TYPE_RGBA : IHDR_COLOR_TYPE_RGB);
+                break;
+            case Gray:
+                buffer.put(metaInfo.hasAlpha ? IHDR_COLOR_TYPE_GREY_ALPHA : IHDR_COLOR_TYPE_GREY);
+                break;
+        }
         buffer.put(IHDR_COMPRESSION_METHOD);
         buffer.put(IHDR_FILTER_METHOD);
         buffer.put(IHDR_INTERLACE_METHOD);

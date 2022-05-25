@@ -98,7 +98,7 @@ public class Examples {
 <dependency>
     <groupId>com.pngencoder</groupId>
     <artifactId>pngencoder</artifactId>
-    <version>0.11.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -135,6 +135,12 @@ Run yourself using [PngEncoderBenchmarkCompressionSpeedVsSize.java](src/test/jav
 
 In the table above we see that the "Speed / Size" column is close to 1 for all compression levels but 0. You likely want to avoid compression level 0 (no compression) if the file size matters at all. In comparison to using compression level 1 it's 35% faster, but the file size is a whopping 827%. That is likely not worth it.
 
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md)
+
+
 ## Noteworthy Caveats
 This library achieves the speedup mainly using multithreading. The performance tests above were run on a computer with 8 logical cores. So if you for example use a single core computer (perhaps in the cloud) the speedup will not be significant.
 
@@ -143,6 +149,10 @@ The file size is about 2% larger than images encoded by ImageIO. This small over
 This library will output either a truecolor ARGB or RGB file. It does not support grayscale and indexed PNG file output.
 
 Support for metadata is currently close to zero. If you need comments in your PNG file, or advanced support for color profiles this library currently does not support that. If you just are interested in a simple SRGB profile there is an experimental method for it.
+
+## Contributing
+When contributing please respect the style guide in the CONTRIBUTING.md. If you use IntellJ IDEA you can import the looklet_intellij_code_style.xml
+to have IDEA setup with the right settings. 
 
 ## Looklet
 We develop and use this library at https://www.looklet.com/ to quickly compress high quality fashion images for e-commerce.
