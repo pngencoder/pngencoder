@@ -3,6 +3,7 @@ package com.pngencoder;
 import org.openjdk.jmh.util.NullOutputStream;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -70,5 +71,30 @@ class PngEncoderTestUtil {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static void assertThatImageIsEqual(BufferedImage actual, BufferedImage expected) {
+        for (int y = 0; y < expected.getHeight(); y++) {
+            for (int x = 0; x < expected.getWidth(); x++) {
+                int expectedPixel = expected.getRGB(x, y);
+                int actualPixel = actual.getRGB(x, y);
+                assertThatPixelIs(x, y, actualPixel, expectedPixel);
+            }
+        }
+    }
+
+    private static void assertThatPixelIs(int x, int y, int actual, int expected) {
+        if (expected == actual) {
+            return;
+        }
+
+        String formattedActual = formatPixel(actual);
+        String formattedExpected = formatPixel(expected);
+        String reason = String.format("Pixel at %d,%d Expected: %s Actually: %s", x, y, formattedExpected, formattedActual);
+        throw new AssertionError(reason);
+    }
+
+    private static String formatPixel(int pixel) {
+        return String.format("0x%08x", pixel);
     }
 }
