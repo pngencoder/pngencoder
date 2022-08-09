@@ -86,6 +86,11 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <doclint>-html,-syntax,-accessibility,-missing</doclint>
+                    <failOnError>false</failOnError>
+                    <quiet>true</quiet>
+                </configuration>
             </plugin>
 
             <plugin>
