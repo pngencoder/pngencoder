@@ -22,6 +22,25 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * https://etc.usf.edu/clipart/info/license
  */
 public class PngEncoderInputTypesTest {
+
+    @Test
+    void testWorkaround() throws IOException {
+        BufferedImage bufferedImage = PngEncoderTestUtil.readTestImageResource("thermos_36667_sm.gif");
+
+        if (bufferedImage.getType() == BufferedImage.TYPE_BYTE_INDEXED) {
+            final BufferedImage bgr = new BufferedImage(bufferedImage.getWidth(), bufferedImage.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+            bgr.getGraphics().drawImage(bufferedImage, 0, 0, null);
+            bufferedImage = bgr;
+        }
+
+        byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
+                .toBytes();
+
+        BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
+
+        PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
+    }
+
     @Test
     void testGrayscaleGifShouldBeSavedProperly() {
         assertThrows(UnsupportedOperationException.class, () -> {
