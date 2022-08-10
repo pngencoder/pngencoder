@@ -65,22 +65,12 @@ public class PngEncoderInputTypesTest {
             g.setColor(new Color(255, 255, 255));
             g.drawRect(0, 1, 1, 1);
 
-            if (i == 7) {
-                // 7 is not supported yet. Make sure that we give a nice UnsupportedOperationException.
-                assertThrows(UnsupportedOperationException.class, () -> {
-                    byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
-                            .toBytes();
-                });
-            } else {
-                byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
-                        .toBytes();
+            byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
+                    .toBytes();
 
-                BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
+            BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
 
-                PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
-            }
-
-
+            PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
         }
     }
 

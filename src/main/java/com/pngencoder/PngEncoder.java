@@ -147,12 +147,16 @@ public class PngEncoder {
      * @return number of bytes written
      */
     public int toStream(OutputStream outputStream) {
+        BufferedImage actualBufferedImage = bufferedImage;
+
         if (bufferedImage.getType() == BufferedImage.TYPE_4BYTE_ABGR_PRE) {
-            throw new UnsupportedOperationException("BufferedImage with type " + bufferedImage.getType() + " is not supported!");
+            // This is a hack. We don't really support TYPE_4BYTE_ABGR_PRE yet, but we can convert it to something that can be encoded.
+            // It would probably be better to convert it manually.
+            actualBufferedImage = PngEncoderBufferedImageConverter.ensureType(bufferedImage, PngEncoderBufferedImageType.TYPE_4BYTE_ABGR);
         }
 
         try {
-            return PngEncoderLogic.encode(bufferedImage, outputStream, compressionLevel,
+            return PngEncoderLogic.encode(actualBufferedImage, outputStream, compressionLevel,
                     multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions,
                     isPredictorEncodingEnabled());
         } catch (IOException e) {
