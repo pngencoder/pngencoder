@@ -104,7 +104,7 @@ public class PngEncoderInputTypesTest {
 
     @Test
     void testGrayscaleIndexed() throws IOException {
-        BufferedImage bufferedImage = new BufferedImage(1, 2, 13);
+        BufferedImage bufferedImage = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_INDEXED);
         Graphics g = bufferedImage.getGraphics();
 
         g.setColor(new Color(4, 4, 4));
@@ -124,7 +124,7 @@ public class PngEncoderInputTypesTest {
 
     @Test
     void testColorIndexed() throws IOException {
-        BufferedImage bufferedImage = new BufferedImage(1, 2, 13);
+        BufferedImage bufferedImage = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_INDEXED);
         Graphics g = bufferedImage.getGraphics();
 
         g.setColor(new Color(4, 4, 4));
