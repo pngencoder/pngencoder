@@ -151,7 +151,7 @@ This library will output either a truecolor ARGB or RGB file. It does not suppor
 Support for metadata is currently close to zero. If you need comments in your PNG file, or advanced support for color profiles this library currently does not support that. If you just are interested in a simple SRGB profile there is an experimental method for it.
 
 ## Contributing
-When contributing please respect the style guide in the CONTRIBUTING.md. If you use IntellJ IDEA you can import the looklet_intellij_code_style.xml
+When contributing please respect the style guide in the [CONTRIBUTING.md](./CONTRIBUTING.md). If you use IntellJ IDEA you can import the  [looklet_intellij_code_style.xml](./looklet_intellij_code_style.xml)
 to have IDEA setup with the right settings. 
 
 ## Looklet
