@@ -3,7 +3,6 @@ package com.pngencoder;
 import org.openjdk.jmh.util.NullOutputStream;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -87,6 +86,8 @@ class PngEncoderTestUtil {
         if (expected == actual) {
             return;
         }
+
+        // TODO: If alpha is zero, it should be OK that the color values differ. This will be interesting to pre-multiplied alpha.
 
         String formattedActual = formatPixel(actual);
         String formattedExpected = formatPixel(expected);

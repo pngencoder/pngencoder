@@ -24,24 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class PngEncoderInputTypesTest {
 
     @Test
-    void testWorkaround() throws IOException {
-        BufferedImage bufferedImage = PngEncoderTestUtil.readTestImageResource("thermos_36667_sm.gif");
-
-        if (bufferedImage.getType() == BufferedImage.TYPE_BYTE_INDEXED) {
-            final BufferedImage bgr = new BufferedImage(bufferedImage.getWidth(), bufferedImage.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-            bgr.getGraphics().drawImage(bufferedImage, 0, 0, null);
-            bufferedImage = bgr;
-        }
-
-        byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
-                .toBytes();
-
-        BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
-
-        PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
-    }
-
-    @Test
     void testGrayscaleGifShouldBeSavedProperly() throws IOException {
         final BufferedImage bufferedImage = getRealGifImage();
 
@@ -94,7 +76,7 @@ public class PngEncoderInputTypesTest {
 
     @Test
     void testGrayscaleIndexed() throws IOException {
-        BufferedImage bufferedImage = new BufferedImage(1, 2, 13);
+        BufferedImage bufferedImage = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_INDEXED);
         Graphics g = bufferedImage.getGraphics();
 
         g.setColor(new Color(4, 4, 4));
@@ -114,7 +96,7 @@ public class PngEncoderInputTypesTest {
 
     @Test
     void testColorIndexed() throws IOException {
-        BufferedImage bufferedImage = new BufferedImage(1, 2, 13);
+        BufferedImage bufferedImage = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_INDEXED);
         Graphics g = bufferedImage.getGraphics();
 
         g.setColor(new Color(4, 4, 4));

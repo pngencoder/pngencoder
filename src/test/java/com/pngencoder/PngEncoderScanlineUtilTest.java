@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
-import javax.imageio.ImageIO;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -43,12 +40,6 @@ public class PngEncoderScanlineUtilTest {
         byte[] ihdrHeader = PngEncoderLogic.getIhdrHeader(bufferedImage.getWidth(), bufferedImage.getHeight(), metaInfo);
 
         assertThat((int)ihdrHeader[9], is(2));
-
-        byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
-                .toBytes();
-
-        BufferedImage read = ImageIO.read(new ByteArrayInputStream(png));
-
     }
 
     @Test
