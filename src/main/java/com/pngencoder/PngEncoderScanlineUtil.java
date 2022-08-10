@@ -10,7 +10,6 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.PixelInterleavedSampleModel;
-import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
@@ -68,7 +67,7 @@ class PngEncoderScanlineUtil {
      */
     static class EncodingMetaInfo {
         /**
-         * Count of color channels. Can either be 1 (for gray),
+         * Count of color channels. Can either be 1 (for gray), 2 (gray with alpha), 3 (rgb), 4 (rgb with alpha)
          */
         int channels;
         /**
@@ -102,7 +101,7 @@ class PngEncoderScanlineUtil {
         /**
          * The kind of color space used in the image
          */
-        ColorSpaceType colorSpaceType = ColorSpaceType.Rgb;
+        ColorSpaceType colorSpaceType;
     }
 
     /*
@@ -114,24 +113,13 @@ class PngEncoderScanlineUtil {
         final PngEncoderBufferedImageType type = PngEncoderBufferedImageType.valueOf(bufferedImage);
         ColorSpace colorSpace = bufferedImage.getColorModel().getColorSpace();
 
-        boolean needToFallBackTosRGB = false;
         if (!colorSpace.isCS_sRGB() && colorSpace instanceof ICC_ColorSpace) {
             info.colorProfile = ((ICC_ColorSpace) colorSpace).getProfile();
-            switch (colorSpace.getType()) {
-                case ColorSpace.TYPE_RGB:
-                    break;
-                case ColorSpace.TYPE_GRAY:
-                    info.colorSpaceType = EncodingMetaInfo.ColorSpaceType.Gray;
-                    break;
-                default:
-                    /*
-                     * We can only handle RGB and GRAY in png. CMYK etc. is not in the
-                     * spec...
-                     */
-                    needToFallBackTosRGB = true;
-                    break;
-            }
         }
+
+        info.colorSpaceType = !colorSpace.isCS_sRGB() && colorSpace instanceof ICC_ColorSpace && colorSpace.getType() == ColorSpace.TYPE_GRAY ?
+                EncodingMetaInfo.ColorSpaceType.Gray :
+                EncodingMetaInfo.ColorSpaceType.Rgb;
 
         switch (type) {
             case TYPE_INT_ARGB:
@@ -160,9 +148,7 @@ class PngEncoderScanlineUtil {
                 info.bitsPerChannel = 16;
                 break;
             default:
-                boolean canICCBeHandled = false;
-                SampleModel sampleModel = bufferedImage.getRaster().getSampleModel();
-                info.hasAlpha = bufferedImage.getTransparency() != Transparency.OPAQUE;
+                info.hasAlpha = bufferedImage.getTransparency() != Transparency.OPAQUE; // TODO: This doesn't look right. What if the value is Transparency.BITMASK?
 
                 /*
                  * Default sRGB byte encoding
@@ -176,10 +162,15 @@ class PngEncoderScanlineUtil {
                 }
 
                 /*
+                 * We can only handle RGB and GRAY in png. CMYK etc. is not in the spec...
+                 */
+                final boolean needToFallBackTosRGB = !colorSpace.isCS_sRGB() && colorSpace instanceof ICC_ColorSpace && colorSpace.getType() != ColorSpace.TYPE_RGB && colorSpace.getType() != ColorSpace.TYPE_GRAY;
+                /*
                  * When it is a UShort GRAY or RGB buffer we can write it as 16 bit image.
                  */
+                boolean canICCBeHandled = false;
                 if (!needToFallBackTosRGB && bufferedImage.getRaster().getDataBuffer().getDataType() == DataBuffer.TYPE_USHORT) {
-                    info.channels = sampleModel.getNumBands();
+                    info.channels = bufferedImage.getRaster().getSampleModel().getNumBands();
                     info.bytesPerPixel = info.channels * 2;
                     info.bitsPerChannel = 16;
                     canICCBeHandled = true;

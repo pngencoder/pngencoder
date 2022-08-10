@@ -4,7 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -26,6 +29,26 @@ public class PngEncoderScanlineUtilTest {
         final int actual = data.length;
         final int expected = bufferedImage.getHeight() * (bufferedImage.getWidth() * 4 + 1);
         assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void getIndexedSize() throws IOException {
+        final BufferedImage bufferedImage = PngEncoderTestUtil.createTestImage(PngEncoderBufferedImageType.TYPE_BYTE_INDEXED);
+        final byte[] data = PngEncoderScanlineUtil.get(bufferedImage);
+        final int actual = data.length;
+        final int expected = bufferedImage.getHeight() * (bufferedImage.getWidth() * 3 + 1);
+        assertThat(actual, is(expected));
+
+        PngEncoderScanlineUtil.EncodingMetaInfo metaInfo = PngEncoderScanlineUtil.getEncodingMetaInfo(bufferedImage);
+        byte[] ihdrHeader = PngEncoderLogic.getIhdrHeader(bufferedImage.getWidth(), bufferedImage.getHeight(), metaInfo);
+
+        assertThat((int)ihdrHeader[9], is(2));
+
+        byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
+                .toBytes();
+
+        BufferedImage read = ImageIO.read(new ByteArrayInputStream(png));
+
     }
 
     @Test
