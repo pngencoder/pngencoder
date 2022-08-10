@@ -243,6 +243,9 @@ class PngEncoderScanlineUtil {
             case TYPE_USHORT_GRAY:
                 getUshortGray(bufferedImage, yStart, width, heightToStream, consumer);
                 break;
+            case TYPE_BYTE_INDEXED:
+                getFallback(bufferedImage, yStart, width, heightToStream, consumer);
+                break;
             default:
                 if (raster.getDataBuffer() instanceof DataBufferUShort) {
                     if (getUshortGenericDataBufferUShort(bufferedImage, yStart, width, heightToStream, consumer)) {
@@ -266,14 +269,20 @@ class PngEncoderScanlineUtil {
                     }
                 }
 
-                // Fallback for unsupported type.
-                final int[] elements = bufferedImage.getRGB(0, yStart, width, heightToStream, null, 0, width);
-                if (bufferedImage.getTransparency() == Transparency.OPAQUE) {
-                    getIntRgb(elements, yStart, width, heightToStream, consumer);
-                } else {
-                    getIntArgb(elements, yStart, width, heightToStream, consumer);
-                }
+                getFallback(bufferedImage, yStart, width, heightToStream, consumer);
                 break;
+        }
+    }
+
+    /**
+     * Fallback for unsupported types. We use getRGB, which will convert the image.
+     */
+    private static void getFallback(BufferedImage bufferedImage, int yStart, int width, int heightToStream, AbstractPNGLineConsumer consumer) throws IOException {
+        final int[] elements = bufferedImage.getRGB(0, yStart, width, heightToStream, null, 0, width);
+        if (bufferedImage.getTransparency() == Transparency.OPAQUE) {
+            getIntRgb(elements, yStart, width, heightToStream, consumer);
+        } else {
+            getIntArgb(elements, yStart, width, heightToStream, consumer);
         }
     }
 

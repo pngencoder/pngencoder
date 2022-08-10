@@ -42,18 +42,15 @@ public class PngEncoderInputTypesTest {
     }
 
     @Test
-    void testGrayscaleGifShouldBeSavedProperly() {
-        assertThrows(UnsupportedOperationException.class, () -> {
+    void testGrayscaleGifShouldBeSavedProperly() throws IOException {
+        final BufferedImage bufferedImage = getRealGifImage();
 
-            final BufferedImage bufferedImage = getRealGifImage();
+        byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
+                .toBytes();
 
-            byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
-                    .toBytes();
-//
-//            BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
-//
-//            PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
-        });
+        BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
+
+        PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
     }
 
     private BufferedImage getRealGifImage() {
@@ -86,8 +83,8 @@ public class PngEncoderInputTypesTest {
             g.setColor(new Color(255, 255, 255));
             g.drawRect(0, 1, 1, 1);
 
-            if (i == 7 || i == 13) {
-                // 7 and 13 are not supported yet. Make sure that we give a nice UnsupportedOperationException.
+            if (i == 7) {
+                // 7 is not supported yet. Make sure that we give a nice UnsupportedOperationException.
                 assertThrows(UnsupportedOperationException.class, () -> {
                     byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
                             .toBytes();
@@ -106,7 +103,7 @@ public class PngEncoderInputTypesTest {
     }
 
     @Test
-    void testGrayscaleIndexed() {
+    void testGrayscaleIndexed() throws IOException {
         BufferedImage bufferedImage = new BufferedImage(1, 2, 13);
         Graphics g = bufferedImage.getGraphics();
 
@@ -116,19 +113,17 @@ public class PngEncoderInputTypesTest {
         g.setColor(new Color(255, 255, 255));
         g.drawRect(0, 1, 1, 1);
 
-        assertThrows(UnsupportedOperationException.class, () -> {
-            byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
-                    .toBytes();
+        byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
+                .toBytes();
 
-            //        BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
+        BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
 
-            //        PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
-        });
+        PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
 
     }
 
     @Test
-    void testColorIndexed() {
+    void testColorIndexed() throws IOException {
         BufferedImage bufferedImage = new BufferedImage(1, 2, 13);
         Graphics g = bufferedImage.getGraphics();
 
@@ -138,14 +133,11 @@ public class PngEncoderInputTypesTest {
         g.setColor(new Color(255, 0, 0));
         g.drawRect(0, 1, 1, 1);
 
-        assertThrows(UnsupportedOperationException.class, () -> {
+        byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
+                .toBytes();
 
-            byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
-                    .toBytes();
+        BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
 
-            BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
-
-            PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
-        });
+        PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
     }
 }
