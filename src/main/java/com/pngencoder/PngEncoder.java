@@ -150,6 +150,8 @@ public class PngEncoder {
         BufferedImage actualBufferedImage = bufferedImage;
 
         if (bufferedImage.getType() == BufferedImage.TYPE_4BYTE_ABGR_PRE) {
+            // This is a hack. We don't really support TYPE_4BYTE_ABGR_PRE yet, but we can convert it to something that can be encoded.
+            // It would probably be better to convert it manually.
             actualBufferedImage = PngEncoderBufferedImageConverter.ensureType(bufferedImage, PngEncoderBufferedImageType.TYPE_4BYTE_ABGR);
         }
 
