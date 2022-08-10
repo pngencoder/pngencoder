@@ -147,6 +147,10 @@ public class PngEncoder {
      * @return number of bytes written
      */
     public int toStream(OutputStream outputStream) {
+        if (bufferedImage.getType() == BufferedImage.TYPE_4BYTE_ABGR_PRE) {
+            throw new UnsupportedOperationException("BufferedImage with type " + bufferedImage.getType() + " is not supported!");
+        }
+
         try {
             return PngEncoderLogic.encode(bufferedImage, outputStream, compressionLevel,
                     multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions,
