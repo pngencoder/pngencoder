@@ -147,8 +147,14 @@ public class PngEncoder {
      * @return number of bytes written
      */
     public int toStream(OutputStream outputStream) {
+        BufferedImage actualBufferedImage = bufferedImage;
+
+        if (bufferedImage.getType() == BufferedImage.TYPE_4BYTE_ABGR_PRE) {
+            actualBufferedImage = PngEncoderBufferedImageConverter.ensureType(bufferedImage, PngEncoderBufferedImageType.TYPE_4BYTE_ABGR);
+        }
+
         try {
-            return PngEncoderLogic.encode(bufferedImage, outputStream, compressionLevel,
+            return PngEncoderLogic.encode(actualBufferedImage, outputStream, compressionLevel,
                     multiThreadedCompressionEnabled, srgbRenderingIntent, physicalPixelDimensions,
                     isPredictorEncodingEnabled());
         } catch (IOException e) {
