@@ -29,6 +29,20 @@ public class PngEncoderScanlineUtilTest {
     }
 
     @Test
+    public void getIndexedSize() throws IOException {
+        final BufferedImage bufferedImage = PngEncoderTestUtil.createTestImage(PngEncoderBufferedImageType.TYPE_BYTE_INDEXED);
+        final byte[] data = PngEncoderScanlineUtil.get(bufferedImage);
+        final int actual = data.length;
+        final int expected = bufferedImage.getHeight() * (bufferedImage.getWidth() * 3 + 1);
+        assertThat(actual, is(expected));
+
+        PngEncoderScanlineUtil.EncodingMetaInfo metaInfo = PngEncoderScanlineUtil.getEncodingMetaInfo(bufferedImage);
+        byte[] ihdrHeader = PngEncoderLogic.getIhdrHeader(bufferedImage.getWidth(), bufferedImage.getHeight(), metaInfo);
+
+        assertThat((int)ihdrHeader[9], is(2));
+    }
+
+    @Test
     public void getIntBgr() throws IOException {
         assertThatScanlineOfTestImageEqualsIntRgbOrArgb(PngEncoderBufferedImageType.TYPE_INT_BGR, false);
     }
