@@ -121,7 +121,7 @@ public class SubimageEncodingTest {
                 long a2 = (rgb2 & 0xFF000000) >> 24;
 
                 // We only compare the image rgb values if the alpha is not 0
-                if (a1 != 0 && a2 != 0) {
+                if (a1 != 0 || a2 != 0) {
                     assertEquals(rgbSource, rgb1, "Source compare failure with type " + type + " "
                             + Long.toString(rgbSource, 16) + " != " + Long.toString(rgb1, 16));
                     assertEquals(rgb1, rgb2, "Compare failure with type " + type + " " + Long.toString(rgb1, 16) + " != "
