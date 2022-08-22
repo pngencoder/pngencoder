@@ -12,6 +12,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.awt.image.BufferedImage;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class PngEncoderBenchmarkCompressionSpeedVsSize {
@@ -22,10 +23,10 @@ public class PngEncoderBenchmarkCompressionSpeedVsSize {
             .timeUnit(TimeUnit.SECONDS)
             .threads(1)
             .forks(1)
-            .warmupIterations(1)
+            .warmupIterations(2)
             .measurementIterations(1)
-            .warmupTime(TimeValue.seconds(2))
-            .measurementTime(TimeValue.seconds(5))
+            .warmupTime(TimeValue.seconds(3))
+            .measurementTime(TimeValue.seconds(7))
             .build();
 
     @Disabled("run manually")
@@ -56,107 +57,37 @@ public class PngEncoderBenchmarkCompressionSpeedVsSize {
         final BufferedImage bufferedImage = createTestImage();
     }
 
+    private static Random random = new Random();
     @Benchmark
-    public void compressionLevel0(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 0);
+    public int[] loopVariableInline(BenchmarkState state) {
+        int height = state.bufferedImage.getHeight();
+        int width = state.bufferedImage.getWidth();
+        int[] buffer = new int[width*height];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                buffer[width*y + x] = random.nextInt();
+            }
+        }
+        return buffer;
     }
 
     @Benchmark
-    public void compressionLevel1(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 1);
-    }
+    public int[] loopVariablePtr(BenchmarkState state) {
+        int height = state.bufferedImage.getHeight();
+        int width = state.bufferedImage.getWidth();
+        int[] buffer = new int[width*height];
 
-    @Benchmark
-    public void compressionLevel2(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 2);
-    }
-
-    @Benchmark
-    public void compressionLevel3(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 3);
-    }
-
-    @Benchmark
-    public void compressionLevel4(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 4);
-    }
-
-    @Benchmark
-    public void compressionLevel5(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 5);
-    }
-
-    @Benchmark
-    public void compressionLevel6(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 6);
-    }
-
-    @Benchmark
-    public void compressionLevel7(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 7);
-    }
-
-    @Benchmark
-    public void compressionLevel8(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 8);
-    }
-
-    @Benchmark
-    public void compressionLevel9(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoder(state.bufferedImage, 9);
-    }
-
-    @Benchmark
-    public void compressionLevel0Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 0);
-    }
-
-    @Benchmark
-    public void compressionLevel1Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 1);
-    }
-
-    @Benchmark
-    public void compressionLevel2Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 2);
-    }
-
-    @Benchmark
-    public void compressionLevel3Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 3);
-    }
-
-    @Benchmark
-    public void compressionLevel4Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 4);
-    }
-
-    @Benchmark
-    public void compressionLevel5Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 5);
-    }
-
-    @Benchmark
-    public void compressionLevel6Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 6);
-    }
-
-    @Benchmark
-    public void compressionLevel7Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 7);
-    }
-
-    @Benchmark
-    public void compressionLevel8Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 8);
-    }
-
-    @Benchmark
-    public void compressionLevel9Predictor(BenchmarkState state) {
-        PngEncoderTestUtil.encodeWithPngEncoderPredictorEncoding(state.bufferedImage, 9);
+        int ptr = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                buffer[ptr++] = random.nextInt();
+            }
+        }
+        return buffer;
     }
 
     private static BufferedImage createTestImage() {
-        return PngEncoderTestUtil.readTestImageResource("png-encoder-logo.png");
+        return new BufferedImage(1000, 1000, BufferedImage.TYPE_3BYTE_BGR);
     }
 }

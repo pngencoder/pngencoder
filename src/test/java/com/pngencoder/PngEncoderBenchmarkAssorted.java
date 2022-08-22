@@ -27,6 +27,7 @@ public class PngEncoderBenchmarkAssorted {
         }
     }
 
+
     @Disabled("run manually")
     @Test
     public void runBenchmarkIntelliJIdeaProfilerImageIO() {
