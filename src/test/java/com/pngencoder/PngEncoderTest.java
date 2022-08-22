@@ -329,10 +329,9 @@ public class PngEncoderTest {
         int height = bufferedImage.getHeight();
         int[] argbImage = new int[width * height];
 
-        int writePtr = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                argbImage[writePtr++] = bufferedImage.getRGB(x, y);
+                argbImage[y * width + x] = bufferedImage.getRGB(x, y);
             }
         }
 
