@@ -95,7 +95,7 @@ class PngEncoderLogic {
         countingOutputStream.write(FILE_BEGINNING);
 
         IndexedEncoderResult indexedEncoderResult = null;
-        if( bufferedImage.getType() == BufferedImage.TYPE_BYTE_INDEXED) {
+        if (bufferedImage.getType() == BufferedImage.TYPE_BYTE_INDEXED) {
             indexedEncoderResult = PngEncoderIndexed.encodeImageFromIndexed(bufferedImage, metaInfo);
         }
         else if (tryIndexedEncoding) {
