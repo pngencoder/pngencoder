@@ -77,7 +77,7 @@ public class PngEncoder {
     }
 
     /**
-     * Try to encode the image with indexed encoding. This only works if the image is RGB and uses not more then
+     * Try to encode the image with indexed encoding. This only works if the image is RGB and uses not more than
      * 256 colors.
      *
      * @param tryIndexedEncoding true if indexed encoding should be tried.
