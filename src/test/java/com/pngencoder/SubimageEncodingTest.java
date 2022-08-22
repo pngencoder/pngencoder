@@ -118,7 +118,7 @@ public class SubimageEncodingTest {
                 long rgb2 = img2.getRGB(x, y) & 0xFFFFFFFFL;
 
                 long a1 = (rgb1 & 0xFF000000) >> 24;
-                long a2 = (rgb1 & 0xFF000000) >> 24;
+                long a2 = (rgb2 & 0xFF000000) >> 24;
 
                 // We only compare the image rgb values if the alpha is not 0
                 if (a1 != 0 && a2 != 0) {
