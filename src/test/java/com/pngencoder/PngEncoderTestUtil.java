@@ -94,8 +94,8 @@ class PngEncoderTestUtil {
         long alphaActual = actual & 0xFF000000L;
         long alphaExpected = actual & 0xFF000000L;
         if (alphaExpected == alphaActual && alphaExpected == 0) {
-            // The alpha is 0, so the pixel is not visible. So we don't care
-            // about the not visible rgb values. The indexed encoders flattens this
+            // The alpha is 0, so the pixel is not visible. We don't care
+            // about not visible rgb values. The indexed encoder flattens this
             // values to 0.
             return;
         }
