@@ -5,10 +5,16 @@ import com.pngencoder.PngEncoderScanlineUtil.EncodingMetaInfo;
 import com.pngencoder.PngEncoderScanlineUtil.EncodingMetaInfo.ColorSpaceType;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
+import java.awt.image.PixelInterleavedSampleModel;
+import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class PngEncoderIndexed {
+
     static class IndexedEncoderResult {
         byte[] colorTable;
         byte[] transparencyTable;
@@ -29,13 +35,11 @@ public class PngEncoderIndexed {
         /*
          * We only can encode 8 bit rgb image data here.
          */
-		if (metaInfo.bitsPerChannel != 8 || metaInfo.channels == 1) {
-			return null;
-		}
+        if (metaInfo.bitsPerChannel != 8 || metaInfo.channels == 1) {
+            return null;
+        }
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream(image.getHeight() * image.getWidth());
-
-        IndexedEncoderResult result = new IndexedEncoderResult();
+        ByteArrayOutputStream out = new ByteArrayOutputStream(image.getHeight() * (image.getWidth() + 1));
 
         // The first byte is 0; We don't try predictor encoding here. It's not worth the effort.
         byte[] indexedRow = new byte[image.getWidth() + 1];
@@ -54,9 +58,9 @@ public class PngEncoderIndexed {
                             int b = currRow[3] & 0xFF;
                             int a = currRow[4] & 0xFF;
                             int v = (a << 24) | (r << 16) | (g << 8) | b;
-							if (a == 0) {
-								v = 0;
-							}
+                            if (a == 0) {
+                                v = 0;
+                            }
                             // initialise the first color slot
                             table.findColorLookup(v);
                             firstRow = false;
@@ -69,11 +73,11 @@ public class PngEncoderIndexed {
                             int b = currRow[readPtr++] & 0xFF;
                             int a = currRow[readPtr++] & 0xFF;
                             int v;
-							if (a == 0) {
-								v = 0;
-							} else {
-								v = (a << 24) | (r << 16) | (g << 8) | b;
-							}
+                            if (a == 0) {
+                                v = 0;
+                            } else {
+                                v = (a << 24) | (r << 16) | (g << 8) | b;
+                            }
                             indexedRow[x] = table.findColor(v);
                         }
 
@@ -114,13 +118,18 @@ public class PngEncoderIndexed {
             return null;
         }
 
+        return makeIndexedEncoderResult(metaInfo, out, indexedRow.length, table);
+    }
+
+    private static IndexedEncoderResult makeIndexedEncoderResult(EncodingMetaInfo metaInfo, ByteArrayOutputStream out, int rowByteSize, ColorTable table) {
+        IndexedEncoderResult result = new IndexedEncoderResult();
         result.rawIDAT = out.toByteArray();
         result.colorTable = table.makeColorTable();
-		if (metaInfo.hasAlpha) {
-			result.transparencyTable = table.makeTransparencyTable();
-		}
+        if (metaInfo.hasAlpha) {
+            result.transparencyTable = table.makeTransparencyTable();
+        }
         metaInfo.colorSpaceType = ColorSpaceType.Indexed;
-        metaInfo.rowByteSize = indexedRow.length;
+        metaInfo.rowByteSize = rowByteSize;
         return result;
     }
 
@@ -131,9 +140,9 @@ public class PngEncoderIndexed {
         int lastColorIndex = 0;
 
         byte findColor(int color) {
-			if (lastColor == color) {
-				return (byte) lastColorIndex;
-			}
+            if (lastColor == color) {
+                return (byte) lastColorIndex;
+            }
             return (byte) findColorLookup(color);
         }
 
@@ -174,5 +183,65 @@ public class PngEncoderIndexed {
             }
             return res;
         }
+
+        public void copyFromIndexedColorModel(IndexColorModel colorModel) {
+            usedColors = colorModel.getMapSize();
+            assert usedColors <= 256;
+            colorModel.getRGBs(colorTable);
+        }
+    }
+
+    /*
+     * We convert an already indexed image directly into an indexed png.
+     */
+    static IndexedEncoderResult encodeImageFromIndexed(BufferedImage image, EncodingMetaInfo metaInfo) {
+        assert image.getType() == BufferedImage.TYPE_BYTE_INDEXED;
+        IndexColorModel colorModel = (IndexColorModel) image.getColorModel();
+        assert colorModel.hasAlpha() == metaInfo.hasAlpha;
+
+        int colorCount = colorModel.getMapSize();
+        if (colorCount > 256) {
+            // We can not encode that many colors
+            return null;
+        }
+        Raster imageRaster = image.getData();
+        DataBuffer dataBuffer = imageRaster.getDataBuffer();
+        if (!(dataBuffer instanceof DataBufferByte)) {
+            // We can only handle byte buffers here
+            return null;
+        }
+        DataBufferByte dataBufferByte = (DataBufferByte) dataBuffer;
+
+        if (!(imageRaster.getSampleModel() instanceof PixelInterleavedSampleModel)) {
+            // Unsupported
+            return null;
+        }
+
+        int width = image.getWidth();
+        ByteArrayOutputStream out = new ByteArrayOutputStream(image.getHeight() * width);
+
+        PixelInterleavedSampleModel sampleModel = (PixelInterleavedSampleModel) imageRaster.getSampleModel();
+        byte[] rawBytes = dataBufferByte.getData();
+        int scanlineStride = sampleModel.getScanlineStride();
+        int pixelStride = sampleModel.getPixelStride();
+
+        assert pixelStride == 1;
+        int yStart = 0;
+        int heightToStream = image.getHeight();
+        int linePtr = scanlineStride * (yStart - imageRaster.getSampleModelTranslateY())
+                - imageRaster.getSampleModelTranslateX() * pixelStride;
+        for (int y = 0; y < heightToStream; y++) {
+            int pixelPtr = linePtr;
+
+            out.write(0); // No Predictor encoding
+            out.write(rawBytes, pixelPtr, width);
+
+            linePtr += scanlineStride;
+        }
+
+        ColorTable table = new ColorTable();
+        table.copyFromIndexedColorModel(colorModel);
+
+        return makeIndexedEncoderResult(metaInfo, out, width + 1, table);
     }
 }
