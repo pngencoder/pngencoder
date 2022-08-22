@@ -6,6 +6,7 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -59,32 +60,28 @@ public class PngEncoderBenchmarkCompressionSpeedVsSize {
 
     private static Random random = new Random();
     @Benchmark
-    public int[] loopVariableInline(BenchmarkState state) {
-        int height = state.bufferedImage.getHeight();
-        int width = state.bufferedImage.getWidth();
-        int[] buffer = new int[width*height];
+    public void loopVariableInline(Blackhole blackhole) {
+        int height = 1000;
+        int width = 1000;
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                buffer[width*y + x] = random.nextInt();
+                blackhole.consume(width*y + x);
             }
         }
-        return buffer;
     }
 
     @Benchmark
-    public int[] loopVariablePtr(BenchmarkState state) {
-        int height = state.bufferedImage.getHeight();
-        int width = state.bufferedImage.getWidth();
-        int[] buffer = new int[width*height];
+    public void loopVariablePtr(Blackhole blackhole) {
+        int height = 1000;
+        int width = 1000;
 
         int ptr = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                buffer[ptr++] = random.nextInt();
+                blackhole.consume(ptr);
             }
         }
-        return buffer;
     }
 
     private static BufferedImage createTestImage() {
