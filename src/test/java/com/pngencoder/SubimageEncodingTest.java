@@ -18,8 +18,6 @@ import java.util.Hashtable;
 import java.util.Objects;
 import javax.imageio.ImageIO;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 public class SubimageEncodingTest {
     @Test
     public void testSubimageEncoding() throws IOException {
@@ -109,25 +107,8 @@ public class SubimageEncodingTest {
         byte[] imgData2 = encoder.withBufferedImage(image).toBytes();
         BufferedImage img1 = ImageIO.read(new ByteArrayInputStream(outputStream.toByteArray()));
         BufferedImage img2 = ImageIO.read(new ByteArrayInputStream(imgData2));
-        assertEquals(img1.getWidth(), img2.getWidth());
-        assertEquals(img2.getHeight(), img2.getHeight());
-        for (int y = 0; y < img1.getHeight(); y++) {
-            for (int x = 0; x < img1.getWidth(); x++) {
-                long rgbSource = image.getRGB(x, y) & 0xFFFFFFFFL;
-                long rgb1 = img1.getRGB(x, y) & 0xFFFFFFFFL;
-                long rgb2 = img2.getRGB(x, y) & 0xFFFFFFFFL;
 
-                long a1 = (rgb1 & 0xFF000000) >> 24;
-                long a2 = (rgb2 & 0xFF000000) >> 24;
-
-                // We only compare the image rgb values if the alpha is not 0
-                if (a1 != 0 || a2 != 0) {
-                    assertEquals(rgbSource, rgb1, "Source compare failure with type " + type + " "
-                            + Long.toString(rgbSource, 16) + " != " + Long.toString(rgb1, 16));
-                    assertEquals(rgb1, rgb2, "Compare failure with type " + type + " " + Long.toString(rgb1, 16) + " != "
-                            + Long.toString(rgb2, 16) + " at (" + x + "," + y + ")");
-                }
-            }
-        }
+        PngEncoderTestUtil.assertThatImageIsEqual(img1, image);
+        PngEncoderTestUtil.assertThatImageIsEqual(img2, image);
     }
 }

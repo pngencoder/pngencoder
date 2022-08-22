@@ -10,6 +10,8 @@ import java.io.UncheckedIOException;
 import java.util.Random;
 import javax.imageio.ImageIO;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class PngEncoderTestUtil {
     private static final OutputStream NULL_OUTPUT_STREAM = new NullOutputStream();
 
@@ -73,6 +75,8 @@ class PngEncoderTestUtil {
     }
 
     public static void assertThatImageIsEqual(BufferedImage actual, BufferedImage expected) {
+        assertEquals(actual.getWidth(), expected.getWidth());
+        assertEquals(actual.getHeight(), expected.getHeight());
         for (int y = 0; y < expected.getHeight(); y++) {
             for (int x = 0; x < expected.getWidth(); x++) {
                 int expectedPixel = expected.getRGB(x, y);
@@ -87,7 +91,14 @@ class PngEncoderTestUtil {
             return;
         }
 
-        // TODO: If alpha is zero, it should be OK that the color values differ. This will be interesting to pre-multiplied alpha.
+        long alphaActual = actual & 0xFF000000L;
+        long alphaExpected = actual & 0xFF000000L;
+        if (alphaExpected == alphaActual && alphaExpected == 0) {
+            // The alpha is 0, so the pixel is not visible. So we don't care
+            // about the not visible rgb values. The indexed encoders flattens this
+            // values to 0.
+            return;
+        }
 
         String formattedActual = formatPixel(actual);
         String formattedExpected = formatPixel(expected);
