@@ -79,7 +79,7 @@ public class PngEncoderBenchmarkCompressionSpeedVsSize {
         int ptr = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                blackhole.consume(ptr);
+                blackhole.consume(ptr++);
             }
         }
     }
