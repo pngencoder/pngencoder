@@ -30,11 +30,11 @@ public class SubimageEncodingTest {
 
         for (PngEncoderBufferedImageType type : typesToTest) {
             final BufferedImage bufferedImage = PngEncoderTestUtil.createTestImage(type);
-            testImageEncoders(type, bufferedImage);
+            testImageEncoders(bufferedImage);
         }
     }
 
-    private void testImageEncoders(PngEncoderBufferedImageType type, BufferedImage bufferedImage) throws IOException {
+    private void testImageEncoders(BufferedImage bufferedImage) throws IOException {
         PngEncoder plainCompressor = new PngEncoder().withPredictorEncoding(false).withCompressionLevel(0).withMultiThreadedCompressionEnabled(false);
         PngEncoder predictorCompressor = plainCompressor.withPredictorEncoding(true);
         PngEncoder multithreadCompressor = plainCompressor.withMultiThreadedCompressionEnabled(true);
@@ -48,8 +48,8 @@ public class SubimageEncodingTest {
                 multithreadPredictorCompressor,
                 indexedCompressor
         }) {
-            validateImage(type, bufferedImage, encoder);
-            validateImage(type, bufferedImage.getSubimage(10, 10, 50, 50), encoder);
+            validateImage(bufferedImage, encoder);
+            validateImage(bufferedImage.getSubimage(10, 10, 50, 50), encoder);
         }
     }
 
@@ -60,7 +60,7 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
     @Test
@@ -71,7 +71,7 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
     @Test
@@ -88,7 +88,7 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
     @Test
@@ -98,10 +98,10 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
-    static void validateImage(PngEncoderBufferedImageType type, BufferedImage image, PngEncoder encoder) throws IOException {
+    static void validateImage(BufferedImage image, PngEncoder encoder) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(image, "PNG", outputStream);
         byte[] imgData2 = encoder.withBufferedImage(image).toBytes();
