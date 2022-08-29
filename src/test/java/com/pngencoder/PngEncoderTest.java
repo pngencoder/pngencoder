@@ -225,7 +225,23 @@ public class PngEncoderTest {
          * We can not compare the raw image rgba pixels, as the indexed encoder "normalizes" pixels with an alpha value of
          * zero to 0
          */
-        validateImage(PngEncoderBufferedImageType.TYPE_CUSTOM, bufferedImage, pngEncoder);
+        validateImage(bufferedImage, pngEncoder);
+    }
+
+    @Test
+    public void testDirectConvertedIndexEncoding() throws IOException {
+        final BufferedImage bufferedImage = PngEncoderInputTypesTest.getRealGifImage();
+
+        PngEncoder pngEncoder = new PngEncoder()
+                .withBufferedImage(bufferedImage)
+                .withCompressionLevel(1)
+                .withTryIndexedEncoding(true);
+
+        /*
+         * We can not compare the raw image rgba pixels, as the indexed encoder "normalizes" pixels with an alpha value of
+         * zero to 0
+         */
+        validateImage(bufferedImage, pngEncoder);
     }
 
     @Test

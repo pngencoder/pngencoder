@@ -41,7 +41,7 @@ public class PngEncoderInputTypesTest {
         PngEncoderTestUtil.assertThatImageIsEqual(subimage, unpackedSubimage);
     }
 
-    private BufferedImage getRealGifImage() {
+    static BufferedImage getRealGifImage() {
         return PngEncoderTestUtil.readTestImageResource("thermos_36667_sm.gif");
     }
 
