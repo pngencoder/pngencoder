@@ -10,7 +10,6 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * LICENCE:
@@ -18,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * https://etc.usf.edu/clipart/36600/36667/thermos_36667_sm.gif
  * It is used as an example of an indexed input with no color depth.
  * The png encoder may (should?) convert it into a single grayscale channel.
- *
+ * <p>
  * https://etc.usf.edu/clipart/info/license
  */
 public class PngEncoderInputTypesTest {
@@ -33,9 +32,16 @@ public class PngEncoderInputTypesTest {
         BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
 
         PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
+
+        BufferedImage subimage = bufferedImage.getSubimage(10, 10, 50, 50);
+        byte[] pngSubimage = new PngEncoder().withBufferedImage(subimage)
+                .toBytes();
+
+        BufferedImage unpackedSubimage = ImageIO.read(new ByteArrayInputStream(pngSubimage));
+        PngEncoderTestUtil.assertThatImageIsEqual(subimage, unpackedSubimage);
     }
 
-    private BufferedImage getRealGifImage() {
+    static BufferedImage getRealGifImage() {
         return PngEncoderTestUtil.readTestImageResource("thermos_36667_sm.gif");
     }
 
@@ -49,6 +55,8 @@ public class PngEncoderInputTypesTest {
 
         assertEquals(channels, 1);
         assertEquals(metaInfo.channels, 3);
+        // By default, we will fall back to encode the image as sRGB image
+        assertEquals(metaInfo.colorSpaceType, PngEncoderScanlineUtil.EncodingMetaInfo.ColorSpaceType.Rgb);
     }
 
     @Test
@@ -91,7 +99,6 @@ public class PngEncoderInputTypesTest {
         BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
 
         PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
-
     }
 
     @Test

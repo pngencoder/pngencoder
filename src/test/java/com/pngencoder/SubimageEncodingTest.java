@@ -18,8 +18,6 @@ import java.util.Hashtable;
 import java.util.Objects;
 import javax.imageio.ImageIO;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 public class SubimageEncodingTest {
     @Test
     public void testSubimageEncoding() throws IOException {
@@ -32,23 +30,26 @@ public class SubimageEncodingTest {
 
         for (PngEncoderBufferedImageType type : typesToTest) {
             final BufferedImage bufferedImage = PngEncoderTestUtil.createTestImage(type);
-            testImageEncoders(type, bufferedImage);
+            testImageEncoders(bufferedImage);
         }
     }
 
-    private void testImageEncoders(PngEncoderBufferedImageType type, BufferedImage bufferedImage) throws IOException {
+    private void testImageEncoders(BufferedImage bufferedImage) throws IOException {
         PngEncoder plainCompressor = new PngEncoder().withPredictorEncoding(false).withCompressionLevel(0).withMultiThreadedCompressionEnabled(false);
         PngEncoder predictorCompressor = plainCompressor.withPredictorEncoding(true);
         PngEncoder multithreadCompressor = plainCompressor.withMultiThreadedCompressionEnabled(true);
         PngEncoder multithreadPredictorCompressor = plainCompressor.withMultiThreadedCompressionEnabled(true).withPredictorEncoding(true);
+        PngEncoder indexedCompressor = new PngEncoder().withPredictorEncoding(false).withCompressionLevel(0).withMultiThreadedCompressionEnabled(false)
+                .withTryIndexedEncoding(true);
         for (PngEncoder encoder : new PngEncoder[]{
                 plainCompressor,
                 predictorCompressor,
                 multithreadCompressor,
-                multithreadPredictorCompressor
+                multithreadPredictorCompressor,
+                indexedCompressor
         }) {
-            validateImage(type, bufferedImage, encoder);
-            validateImage(type, bufferedImage.getSubimage(10, 10, 50, 50), encoder);
+            validateImage(bufferedImage, encoder);
+            validateImage(bufferedImage.getSubimage(10, 10, 50, 50), encoder);
         }
     }
 
@@ -59,7 +60,7 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
     @Test
@@ -70,7 +71,7 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
     @Test
@@ -87,7 +88,7 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
     @Test
@@ -97,27 +98,17 @@ public class SubimageEncodingTest {
         Graphics2D graphics = imgRGBA.createGraphics();
         graphics.drawImage(sourceImage, 0, 0, null);
         graphics.dispose();
-        testImageEncoders(PngEncoderBufferedImageType.TYPE_CUSTOM, imgRGBA);
+        testImageEncoders(imgRGBA);
     }
 
-    private void validateImage(PngEncoderBufferedImageType type, BufferedImage image, PngEncoder encoder) throws IOException {
+    static void validateImage(BufferedImage image, PngEncoder encoder) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(image, "PNG", outputStream);
         byte[] imgData2 = encoder.withBufferedImage(image).toBytes();
         BufferedImage img1 = ImageIO.read(new ByteArrayInputStream(outputStream.toByteArray()));
         BufferedImage img2 = ImageIO.read(new ByteArrayInputStream(imgData2));
-        assertEquals(img1.getWidth(), img2.getWidth());
-        assertEquals(img2.getHeight(), img2.getHeight());
-        for (int y = 0; y < img1.getHeight(); y++) {
-            for (int x = 0; x < img1.getWidth(); x++) {
-                long rgbSource = image.getRGB(x, y) & 0xFFFFFFFFL;
-                long rgb1 = img1.getRGB(x, y) & 0xFFFFFFFFL;
-                long rgb2 = img2.getRGB(x, y) & 0xFFFFFFFFL;
-                assertEquals(rgbSource, rgb1, "Source compare failure with type " + type + " "
-                        + Long.toString(rgbSource, 16) + " != " + Long.toString(rgb1, 16));
-                assertEquals(rgb1, rgb2, "Compare failure with type " + type + " " + Long.toString(rgb1, 16) + " != "
-                        + Long.toString(rgb2, 16));
-            }
-        }
+
+        PngEncoderTestUtil.assertThatImageIsEqual(img1, image);
+        PngEncoderTestUtil.assertThatImageIsEqual(img2, image);
     }
 }

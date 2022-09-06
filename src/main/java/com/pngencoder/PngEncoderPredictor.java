@@ -19,6 +19,13 @@ class PngEncoderPredictor {
         /*
          * Encode the image in slices, so that we can stream some image rows into the CPU cache, and then
          * get them distributed to the ZIP threads without thrashing the cache to much.
+         *
+         * I.e. we stream heightPerSlices rows into the CPU cache and predictor encode it. Then we give pass the whole buffer
+         * to the compressing output stream, which will spread it across CPU. That way the CPU data prefetch works well.
+         *
+         * If we directly write row by row into the compressing output stream we are going to trash the CPU cache too much.
+         * Everytime the compression starts the data of the following rows - which are prefetched by the CPU - are
+         * thrown out of the cache. Row by row was slower in benchmarks because of that.
          */
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream(heightPerSlice * metaInfo.rowByteSize);
         for (int y = 0; y < height; y += heightPerSlice) {
