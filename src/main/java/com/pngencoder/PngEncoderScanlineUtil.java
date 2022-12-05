@@ -222,10 +222,11 @@ class PngEncoderScanlineUtil {
                 getIntRgb(raster, yStart, width, heightToStream, consumer);
                 break;
             case TYPE_INT_ARGB:
-                getIntArgb(raster, yStart, width, heightToStream, consumer);
+                getIntArgb(raster, yStart, width, heightToStream, false, consumer);
                 break;
-
-            // TODO: TYPE_INT_ARGB_PRE
+            case TYPE_INT_ARGB_PRE:
+                getIntArgb(raster, yStart, width, heightToStream, true, consumer);
+                break;
             case TYPE_INT_BGR:
                 getIntBgr(raster, yStart, width, heightToStream, consumer);
                 break;
@@ -233,9 +234,11 @@ class PngEncoderScanlineUtil {
                 get3ByteBgr(raster, yStart, width, heightToStream, consumer);
                 break;
             case TYPE_4BYTE_ABGR:
-                get4ByteAbgr(raster, yStart, width, heightToStream, consumer);
+                get4ByteAbgr(raster, yStart, width, heightToStream, false, consumer);
                 break;
-            // TODO: TYPE_4BYTE_ABGR_PRE
+            case TYPE_4BYTE_ABGR_PRE:
+                get4ByteAbgr(raster, yStart, width, heightToStream, true, consumer);
+                break;
             // TODO: TYPE_USHORT_565_RGB
             // TODO: TYPE_USHORT_555_RGB
             case TYPE_BYTE_GRAY:
@@ -386,7 +389,7 @@ class PngEncoderScanlineUtil {
     }
 
     static void getIntArgb(WritableRaster imageRaster, int yStart, int width, int heightToStream,
-            AbstractPNGLineConsumer consumer) throws IOException {
+            boolean preMultipliedAlpha, AbstractPNGLineConsumer consumer) throws IOException {
         final int channels = 4;
         final int rowByteSize = 1 + channels * width;
         byte[] currLine = new byte[rowByteSize];
@@ -411,10 +414,26 @@ class PngEncoderScanlineUtil {
                 int rowByteOffset = 1;
                 for (int x = 0; x < width; x++) {
                     final int element = rawInts[pixelPtr++];
-                    currLine[rowByteOffset++] = (byte) (element >> 16); // R
-                    currLine[rowByteOffset++] = (byte) (element >> 8); // G
-                    currLine[rowByteOffset++] = (byte) element; // B
-                    currLine[rowByteOffset++] = (byte) (element >> 24); // A
+                    byte r = (byte) (element >> 16); // R
+                    byte g = (byte) (element >> 8); // G
+                    byte b = (byte) element; // B
+                    byte a = (byte) (element >> 24); // A
+
+                    if (preMultipliedAlpha) {
+                        // If alpha is 0 or 255 we don't need to do anything
+                        // (the color values are either 0 or we are dividing by 1)
+                        if (a != 0 && a != -1) { // Java's bytes are unsigned, so 255 is represented by -1
+                            double normalizedInverseAlpha = 1.0d / ((a & 0xff) / 255.0);
+                            r = (byte) ((r & 0xff) * normalizedInverseAlpha + 0.5);
+                            g = (byte) ((g & 0xff) * normalizedInverseAlpha + 0.5);
+                            b = (byte) ((b & 0xff) * normalizedInverseAlpha + 0.5);
+                        }
+                    }
+
+                    currLine[rowByteOffset++] = r;
+                    currLine[rowByteOffset++] = g;
+                    currLine[rowByteOffset++] = b;
+                    currLine[rowByteOffset++] = a;
                 }
 
                 linePtr += scanlineStride;
@@ -516,7 +535,7 @@ class PngEncoderScanlineUtil {
     }
 
     static void get4ByteAbgr(WritableRaster imageRaster, int yStart, int width, int heightToStream,
-            AbstractPNGLineConsumer consumer) throws IOException {
+            boolean preMultipliedAlpha, AbstractPNGLineConsumer consumer) throws IOException {
         final int channels = 4;
         final int rowByteSize = 1 + channels * width;
         byte[] currLine = new byte[rowByteSize];
@@ -539,6 +558,18 @@ class PngEncoderScanlineUtil {
                     byte b = rawBytes[pixelPtr++];
                     byte g = rawBytes[pixelPtr++];
                     byte r = rawBytes[pixelPtr++];
+
+                    if (preMultipliedAlpha) {
+                        // If alpha is 0 or 255 we don't need to do anything
+                        // (the color values are either 0 or we are dividing by 1)
+                        if (a != 0 && a != -1) { // Java's bytes are unsigned, so 255 is represented by -1
+                            double normalizedInverseAlpha = 1.0d / ((a & 0xff) / 255.0);
+                            r = (byte) ((r & 0xff) * normalizedInverseAlpha + 0.5);
+                            g = (byte) ((g & 0xff) * normalizedInverseAlpha + 0.5);
+                            b = (byte) ((b & 0xff) * normalizedInverseAlpha + 0.5);
+                        }
+                    }
+
                     currLine[writePtr++] = r;
                     currLine[writePtr++] = g;
                     currLine[writePtr++] = b;
