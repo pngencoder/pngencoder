@@ -87,7 +87,7 @@ class PngEncoderPredictor {
 
                 long estCompressSum = 0;        // Marker 0 for no predictor
                 long estCompressSumSub = 1;     // Marker 1 for sub predictor
-                long estCompressSumUp = 2;      // Marker 2 for up preditor
+                long estCompressSumUp = 2;      // Marker 2 for up predictor
                 long estCompressSumAvg = 3;     // Marker 3 for average predictor
                 long estCompressSumPaeth = 4;   // Marker 4 for paeth predictor
 
