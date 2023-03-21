@@ -3,7 +3,6 @@ package com.pngencoder;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -63,35 +62,30 @@ public class PngEncoderInputTypesTest {
     void testAllTypesOfInput() throws IOException {
 
         for (int i = 1; i <= 13; i++) {
-            BufferedImage bufferedImage = new BufferedImage(1, 2, i);
+            BufferedImage bufferedImage = new BufferedImage(2, 2, i);
 
-            Graphics g = bufferedImage.getGraphics();
-
-            g.setColor(new Color(4, 4, 4));
-            g.drawRect(0, 0, 1, 1);
-
-            g.setColor(new Color(255, 255, 255));
-            g.drawRect(0, 1, 1, 1);
+            // Make sure to use colors with an alpha component,
+            // so we test the handling of types using pre-multiplied alpha
+            bufferedImage.setRGB(0, 0, new Color(10, 17, 25, 0).getRGB());
+            bufferedImage.setRGB(1, 0, new Color(10, 17, 25, 19).getRGB());
+            bufferedImage.setRGB(1, 0, new Color(55, 55, 55, 232).getRGB());
+            bufferedImage.setRGB(1, 1, new Color(243, 117, 189, 255).getRGB());
 
             byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
                     .toBytes();
 
             BufferedImage unpacked = ImageIO.read(new ByteArrayInputStream(png));
 
-            PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage);
+            PngEncoderTestUtil.assertThatImageIsEqual(unpacked, bufferedImage, "Type " + i + ": ");
         }
     }
 
     @Test
     void testGrayscaleIndexed() throws IOException {
         BufferedImage bufferedImage = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_INDEXED);
-        Graphics g = bufferedImage.getGraphics();
 
-        g.setColor(new Color(4, 4, 4));
-        g.drawRect(0, 0, 1, 1);
-
-        g.setColor(new Color(255, 255, 255));
-        g.drawRect(0, 1, 1, 1);
+        bufferedImage.setRGB(0, 0, new Color(4, 4, 4, 217).getRGB());
+        bufferedImage.setRGB(0, 1, new Color(243, 117, 189, 17).getRGB());
 
         byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
                 .toBytes();
@@ -104,13 +98,9 @@ public class PngEncoderInputTypesTest {
     @Test
     void testColorIndexed() throws IOException {
         BufferedImage bufferedImage = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_INDEXED);
-        Graphics g = bufferedImage.getGraphics();
 
-        g.setColor(new Color(4, 4, 4));
-        g.drawRect(0, 0, 1, 1);
-
-        g.setColor(new Color(255, 0, 0));
-        g.drawRect(0, 1, 1, 1);
+        bufferedImage.setRGB(0, 0, new Color(4, 4, 4, 217).getRGB());
+        bufferedImage.setRGB(0, 1, new Color(255, 0, 0, 17).getRGB());
 
         byte[] png = new PngEncoder().withBufferedImage(bufferedImage)
                 .toBytes();
