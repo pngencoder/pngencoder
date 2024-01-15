@@ -73,6 +73,7 @@ class PngEncoderLogic {
             action.encodeImageData(false, deflaterOutputStream);
             deflaterOutputStream.finish();
             deflaterOutputStream.flush();
+            deflater.end();
         } else {
             PngEncoderDeflaterOutputStream deflaterOutputStream = new PngEncoderDeflaterOutputStream(
                     outputStream, compressionLevel, segmentMaxLengthOriginal);

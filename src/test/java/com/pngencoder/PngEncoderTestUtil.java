@@ -75,18 +75,22 @@ class PngEncoderTestUtil {
     }
 
     public static void assertThatImageIsEqual(BufferedImage actual, BufferedImage expected) {
+        assertThatImageIsEqual(actual, expected, "");
+    }
+
+    public static void assertThatImageIsEqual(BufferedImage actual, BufferedImage expected, String reasonPrefix) {
         assertEquals(actual.getWidth(), expected.getWidth());
         assertEquals(actual.getHeight(), expected.getHeight());
         for (int y = 0; y < expected.getHeight(); y++) {
             for (int x = 0; x < expected.getWidth(); x++) {
                 int expectedPixel = expected.getRGB(x, y);
                 int actualPixel = actual.getRGB(x, y);
-                assertThatPixelIs(x, y, actualPixel, expectedPixel);
+                assertThatPixelIs(x, y, actualPixel, expectedPixel, reasonPrefix);
             }
         }
     }
 
-    private static void assertThatPixelIs(int x, int y, int actual, int expected) {
+    private static void assertThatPixelIs(int x, int y, int actual, int expected, String reasonPrefix) {
         if (expected == actual) {
             return;
         }
@@ -102,7 +106,7 @@ class PngEncoderTestUtil {
 
         String formattedActual = formatPixel(actual);
         String formattedExpected = formatPixel(expected);
-        String reason = String.format("Pixel at %d,%d Expected: %s Actually: %s", x, y, formattedExpected, formattedActual);
+        String reason = String.format("%sPixel at %d,%d Expected: %s Actually: %s", reasonPrefix, x, y, formattedExpected, formattedActual);
         throw new AssertionError(reason);
     }
 
