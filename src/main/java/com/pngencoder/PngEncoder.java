@@ -94,9 +94,22 @@ public class PngEncoder {
      *
      * @param multiThreadedCompressionEnabled when {@code true}, multithreaded compression will be used
      * @return a new PngEncoder
+     *
+     * @deprecated Use {@link #withMultiThreadedCompressionDisabled()} instead
      */
+    @Deprecated
     public PngEncoder withMultiThreadedCompressionEnabled(boolean multiThreadedCompressionEnabled) {
         return new PngEncoder(bufferedImage, compressionLevel, multiThreadedCompressionEnabled, srgbRenderingIntent,
+                physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
+    }
+
+    /**
+     * Returns a new PngEncoder which has the same configuration as this one except
+     * multithreaded compression is disabled
+     * @return a new PngEncoder
+     */
+    public PngEncoder withMultiThreadedCompressionDisabled() {
+        return new PngEncoder(bufferedImage, compressionLevel, false, srgbRenderingIntent,
                 physicalPixelDimensions, usePredictorEncoding, tryIndexedEncoding);
     }
 

@@ -93,8 +93,6 @@ public class PngEncoderBenchmarkAssorted {
         outPngEncoder.getParentFile().mkdir();
 
         PngEncoder pngEncoder = new PngEncoder()
-                .withMultiThreadedCompressionEnabled(true)
-                //.withPredictorEncoding(true)
                 .withCompressionLevel(4)
                 .withBufferedImage(original);
 //        System.out.println("saving " + outPngEncoder + "...");
