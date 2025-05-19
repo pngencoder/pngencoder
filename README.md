@@ -109,11 +109,11 @@ public class Examples {
     }
 
     public static byte[] encodeWithMultiThreadedCompressionDisabled(BufferedImage bufferedImage) {
-        // By default the compression is done in multiple threads.
+        // By default, the compression is done in multiple threads.
         // This improves the speed a lot, but you can disable it to compress in the invoking thread only.
         return new PngEncoder()
                 .withBufferedImage(bufferedImage)
-                .withMultiThreadedCompressionEnabled(false)
+                .withMultiThreadedCompressionDisabled()
                 .toBytes();
     }
 }
@@ -125,7 +125,7 @@ public class Examples {
 <dependency>
     <groupId>com.pngencoder</groupId>
     <artifactId>pngencoder</artifactId>
-    <version>0.14.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 

@@ -184,7 +184,7 @@ public class PngEncoderTest {
         byte[] bytes = new PngEncoder()
                 .withBufferedImage(bufferedImage)
                 .withCompressionLevel(1)
-                .withMultiThreadedCompressionEnabled(false)
+                .withMultiThreadedCompressionDisabled()
                 .withPredictorEncoding(true)
                 .toBytes();
 
@@ -396,8 +396,7 @@ public class PngEncoderTest {
         assertThrows(NullPointerException.class, emptyEncoder::toBytes);
 
         PngEncoder encoderWithoutImage = new PngEncoder()
-                .withCompressionLevel(9)
-                .withMultiThreadedCompressionEnabled(true);
+                .withCompressionLevel(9);
         assertThrows(NullPointerException.class, encoderWithoutImage::toBytes);
     }
 }

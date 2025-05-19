@@ -35,18 +35,20 @@ public class SubimageEncodingTest {
     }
 
     private void testImageEncoders(BufferedImage bufferedImage) throws IOException {
-        PngEncoder plainCompressor = new PngEncoder().withPredictorEncoding(false).withCompressionLevel(0).withMultiThreadedCompressionEnabled(false);
-        PngEncoder predictorCompressor = plainCompressor.withPredictorEncoding(true);
-        PngEncoder multithreadCompressor = plainCompressor.withMultiThreadedCompressionEnabled(true);
-        PngEncoder multithreadPredictorCompressor = plainCompressor.withMultiThreadedCompressionEnabled(true).withPredictorEncoding(true);
-        PngEncoder indexedCompressor = new PngEncoder().withPredictorEncoding(false).withCompressionLevel(0).withMultiThreadedCompressionEnabled(false)
-                .withTryIndexedEncoding(true);
+        PngEncoder multiThreadEncoder = new PngEncoder()
+                .withPredictorEncoding(false)
+                .withCompressionLevel(0);
+
+        PngEncoder singleThreadEncoder = multiThreadEncoder.withMultiThreadedCompressionDisabled();
+        PngEncoder singleThreadPredictorEncoder = singleThreadEncoder.withPredictorEncoding(true);
+        PngEncoder multiThreadPredictorEncoder = multiThreadEncoder.withPredictorEncoding(true);
+        PngEncoder indexedEncoder = multiThreadEncoder.withMultiThreadedCompressionDisabled().withTryIndexedEncoding(true);
         for (PngEncoder encoder : new PngEncoder[]{
-                plainCompressor,
-                predictorCompressor,
-                multithreadCompressor,
-                multithreadPredictorCompressor,
-                indexedCompressor
+                singleThreadEncoder,
+                singleThreadPredictorEncoder,
+                multiThreadEncoder,
+                multiThreadPredictorEncoder,
+                indexedEncoder
         }) {
             validateImage(bufferedImage, encoder);
             validateImage(bufferedImage.getSubimage(10, 10, 50, 50), encoder);
