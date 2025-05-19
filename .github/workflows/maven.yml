@@ -15,6 +15,9 @@ jobs:
       matrix:
         java_version: ['8', '11', '17', '21']
         os_version: ['macos-latest', 'ubuntu-latest', 'windows-latest']
+        exclude:
+          - os: macos-latest  # Temurin doesn't provide Java 8 on Apple Silicon, so exclude that
+            java_version: '8'
     runs-on: ${{ matrix.os_version }}
 
     steps:
