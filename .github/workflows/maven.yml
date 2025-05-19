@@ -18,11 +18,11 @@ jobs:
          # Temurin doesn't provide Java 8 on Apple Silicon (which is used for macos-latest),
          # so explicitly build on macos-13 instead (which is run on x86)
         exclude:
-          - os_version: 'macos-latest'
-            java_version: '8'
+          - java_version: '8'
+            os_version: 'macos-latest'
         include:
-          - os_version: 'macos-13'
-            java_version: '8'
+          - java_version: '8'
+            os_version: 'macos-13'
     runs-on: ${{ matrix.os_version }}
 
     steps:
